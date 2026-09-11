@@ -6,56 +6,47 @@ Nenhuma permissão é confiável só porque a UI escondeu um botão. Toda ação
 
 ## 2. RBAC — papéis e permissões
 
-Papéis (enum `app_role`, ver `docs/banco.md`): `super_admin`, `ceo`, `socio`, `desenvolvedor`, `designer`, `social_media`, `financeiro`, `comercial`.
+**Herdado do projeto anterior e adotado como está** (ver docs/banco.md §1) — mais granular do que uma versão simplificada com enum fixo teria sido:
 
-A matriz papel → permissão vive em código, um único lugar: `src/config/permissions.ts`. Formato:
+- `roles`: 8 papéis por organização (`super_admin`, `ceo`, `socio`, `dev`, `designer`, `social_media`, `financeiro`, `comercial`), marcados `is_system = true`.
+- `permissions`: catálogo global de 41 permissões `"resource:action"` (ex.: `client:read`, `finance:write`, `vault:reveal`) cobrindo todos os módulos do roadmap.
+- `role_permissions`: concede permissões a papéis (85 vínculos já seedados).
+
+`src/config/permissions.ts` espelha as 41 chaves só para autocomplete/erro de compilação — a fonte da verdade é o banco:
 
 ```ts
-export const PERMISSIONS = {
-  "org.manage_members": ["super_admin", "ceo"],
-  "financeiro.view": ["super_admin", "ceo", "socio", "financeiro"],
-  "financeiro.edit": ["super_admin", "financeiro"],
-  "cofre.view_credential": ["super_admin", "ceo", "desenvolvedor"],
-  // cada módulo novo declara suas permissões aqui, não espalhado pelo código
-} as const;
+export const PERMISSION_KEYS = ["audit:read", "client:read", "finance:write", /* ... */] as const;
+export type PermissionKey = (typeof PERMISSION_KEYS)[number];
+
+export function can(grantedPermissions: readonly string[] | undefined, permission: PermissionKey): boolean {
+  if (!grantedPermissions) return false;
+  return grantedPermissions.includes(permission);
+}
 ```
 
-`can(membership, permission)` é a única função que decide autorização na aplicação; usada em Server Actions e em Route Handlers antes de qualquer leitura/escrita. Componentes de UI usam a mesma função só para *esconder* botão — nunca é a fonte de verdade.
+`grantedPermissions` vem de `getCurrentSession()` (`src/lib/auth/session.ts`), que resolve `memberships.role_id → role_permissions → permissions.key` uma vez por request. `can()` é a única função que decide autorização na aplicação; usada em Server Actions e Route Handlers antes de qualquer leitura/escrita. Componentes de UI usam a mesma função só para *esconder* botão — nunca é a fonte de verdade.
 
 ## 3. RLS (Row Level Security)
 
-RLS ativo em toda tabela com dado de negócio desde a Fase 0. Padrão de policy (organização é sempre o limite de isolamento):
+**Já aplicado** em `orgs`, `users`, `roles`, `permissions`, `role_permissions`, `memberships`, `activity_events` e `audit.log` (herdado — ver docs/banco.md §1), usando funções auxiliares no schema `atlaz`:
 
 ```sql
-create or replace function auth_org_ids()
-returns setof uuid
-language sql stable security definer
-as $$
-  select org_id from memberships where user_id = auth.uid()
-$$;
-
-alter table organizations enable row level security;
-alter table memberships enable row level security;
-alter table audit_log enable row level security;
-
-create policy "member reads own org" on organizations
-  for select using (id in (select auth_org_ids()));
-
-create policy "member reads memberships of own org" on memberships
-  for select using (org_id in (select auth_org_ids()));
-
-create policy "only super_admin/ceo manage memberships" on memberships
-  for all using (
-    org_id in (select auth_org_ids())
-    and exists (
-      select 1 from memberships m
-      where m.user_id = auth.uid() and m.org_id = memberships.org_id
-        and m.role in ('super_admin','ceo')
-    )
-  );
+atlaz.current_user_id()             -- id em public.users do usuário autenticado
+atlaz.current_org_id()              -- org_id da membership ativa
+atlaz.is_member()                   -- tem membership ativa?
+atlaz.has_permission(p_permission)  -- o papel do usuário tem essa permission_key?
 ```
 
-Toda tabela de negócio futura (clientes, projetos, financeiro...) repete o padrão: policy de `select` por `org_id in auth_org_ids()`, policy de escrita restrita por papel via `exists (...)` na tabela `memberships`. `audit_log` é somente leitura para `super_admin`/`ceo`; escrita só pelo service role (nunca client-side).
+Exemplo de política real (`memberships`):
+
+```sql
+create policy "memberships_write" on memberships
+  for all using (atlaz.has_permission('team:manage'));
+```
+
+Toda tabela de negócio futura (clientes, projetos, financeiro...) repete o padrão: policy de `select` restrita à organização corrente (`atlaz.current_org_id()`), policy de escrita condicionada a `atlaz.has_permission('<recurso>:write')`. `audit.log` é somente leitura para quem tem `audit:read`; escrita só pela service layer (nunca client-side, sem policy de insert para o papel `authenticated`).
+
+**Nuance importante**: `atlaz.current_org_id()`/`current_user_id()` dependem de `auth.uid()` — só resolvem de verdade quando a query roda *como* o usuário final (ex.: chamada direta do browser à API REST/Realtime do Supabase com a chave pública, ou uma futura Edge Function que propague o JWT do usuário). As queries do Next.js via Drizzle (`src/server/db/client.ts`) usam a `DATABASE_URL` — uma conexão privilegiada que **não passa** por RLS. Nesse caminho, quem garante o isolamento por organização e por permissão é a *service layer* (`can()` sobre `session.membership.permissions`, e todo `where` explícito por `org_id`) — RLS aqui é a segunda rede de segurança contra bug de código ou uso futuro de uma chave de menor privilégio, não o mecanismo que protege as queries do Drizzle em si.
 
 ## 4. Autenticação e bootstrap do super admin
 
@@ -64,7 +55,7 @@ Toda tabela de negócio futura (clientes, projetos, financeiro...) repete o padr
   1. O usuário precisa **já existir** em `auth.users` (criado pelo fluxo normal de signup/convite do Supabase Auth) — o script nunca cria usuário novo nem senha.
   2. O script é idempotente: rodar de novo não duplica membership nem rebaixa quem já é super admin.
   3. `SUPER_ADMIN_EMAIL` fica em `.env.local`, nunca commitado.
-- Nenhuma rota HTTP pública promove papel. Mudança de papel depois do bootstrap passa pela tela de Equipe, protegida por `can(membership, "org.manage_members")` + RLS.
+- Nenhuma rota HTTP pública promove papel. Mudança de papel depois do bootstrap passa pela tela de Equipe, protegida por `can(permissions, "team:manage")` + RLS (`memberships_write`).
 
 ## 5. Cofre de credenciais (preparação)
 

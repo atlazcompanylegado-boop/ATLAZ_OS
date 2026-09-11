@@ -9,7 +9,10 @@ async function main() {
     throw new Error("DATABASE_URL não configurada em .env.local.");
   }
 
-  const migrationClient = postgres(connectionString, { max: 1 });
+  // prepare:false — necessário se DATABASE_URL apontar para o connection pooler do
+  // Supabase (porta 6543, PgBouncer em modo transaction), que não sustenta prepared
+  // statements entre comandos. Inofensivo também na conexão direta (porta 5432).
+  const migrationClient = postgres(connectionString, { max: 1, prepare: false });
   const db = drizzle(migrationClient);
 
   console.log("Aplicando migrations em src/server/db/migrations ...");

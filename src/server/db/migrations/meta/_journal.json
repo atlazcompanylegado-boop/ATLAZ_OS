@@ -5,15 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1789145485404,
-      "tag": "0000_mighty_sue_storm",
+      "when": 1789148132876,
+      "tag": "0000_baseline",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1789145521745,
-      "tag": "0001_rls_and_triggers",
+      "when": 1789148163227,
+      "tag": "0001_auth_sync_trigger",
       "breakpoints": true
     }
   ]

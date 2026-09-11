@@ -9,9 +9,10 @@ export default defineConfig({
   dbCredentials: {
     url: process.env.DATABASE_URL ?? "",
   },
-  // Só gerencia o schema "public" — auth.users pertence ao Supabase Auth e nunca
-  // deve ser criado/alterado por uma migration deste projeto (ver schema/auth-users.ts).
-  schemaFilter: ["public"],
+  // "public" + "audit" são gerenciados por este projeto. "auth" NUNCA — auth.users
+  // pertence ao Supabase Auth e não deve ser criado/alterado por uma migration daqui
+  // (ver schema/auth-users.ts, referenciada só para FK).
+  schemaFilter: ["public", "audit"],
   strict: true,
   verbose: true,
 });

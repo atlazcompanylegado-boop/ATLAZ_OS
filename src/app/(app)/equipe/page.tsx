@@ -7,8 +7,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 
 /**
- * Fase 0 entrega leitura real (memberships já existe no banco). Convite, edição de
- * papel e remoção — protegidos por `can(role, "org.manage_members")" — chegam na Fase 1.
+ * Fase 0 entrega leitura real (memberships já existe no banco, herdado do projeto
+ * anterior). Convite, edição de papel e remoção — protegidos por
+ * `can(permissions, "team:manage")` — chegam na Fase 1.
  */
 export default async function EquipePage() {
   const session = await getCurrentSession();
@@ -46,10 +47,10 @@ export default async function EquipePage() {
           <TableBody>
             {members.map((m) => (
               <TableRow key={m.membershipId}>
-                <TableCell>{m.fullName ?? "—"}</TableCell>
+                <TableCell>{m.fullName}</TableCell>
                 <TableCell className="text-ink-2">{m.email}</TableCell>
                 <TableCell>
-                  <Badge variant="accent">{m.role}</Badge>
+                  <Badge variant="accent">{m.roleName}</Badge>
                 </TableCell>
                 <TableCell className="text-ink-2">
                   {new Intl.DateTimeFormat("pt-BR").format(m.createdAt)}

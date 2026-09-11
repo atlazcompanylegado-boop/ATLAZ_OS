@@ -1,16 +1,20 @@
-import { pgTable, bigint, uuid, text, jsonb, timestamp } from "drizzle-orm/pg-core";
-import { organizations } from "./organizations";
-import { profiles } from "./profiles";
+import { pgSchema, uuid, text, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { orgs } from "./orgs";
+import { users } from "./users";
 
-/** Trilha de auditoria — gravada sempre pela service layer, nunca pela UI (docs/seguranca.md §7). */
-export const auditLog = pgTable("audit_log", {
-  id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
-  orgId: uuid("org_id").references(() => organizations.id),
-  actorId: uuid("actor_id").references(() => profiles.id),
+/** Trilha de auditoria — schema próprio ("audit"), gravada só pela service layer. */
+export const auditSchema = pgSchema("audit");
+
+export const auditLog = auditSchema.table("log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orgId: uuid("org_id").references(() => orgs.id),
+  actorUserId: uuid("actor_user_id").references(() => users.id),
+  actorLabel: text("actor_label"),
   action: text("action").notNull(),
-  entity: text("entity").notNull(),
-  entityId: text("entity_id"),
+  entityType: text("entity_type").notNull(),
+  entityId: uuid("entity_id"),
   before: jsonb("before"),
   after: jsonb("after"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  context: jsonb("context"),
+  at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -1,85 +1,120 @@
 # Banco de Dados — ATLΛZ OS
 
-## 1. Plataforma
+## 1. Baseline herdado do projeto anterior
+
+O projeto Supabase usado pelo ATLΛZ OS **não nasceu vazio**: já continha, quando adotado nesta sessão, um schema completo (organização, usuários, papéis, permissões granulares, memberships, timeline e auditoria), aplicado por uma migration do projeto anterior (rastreada em `public._atlaz_migrations`, fora do Drizzle). Antes de aplicar qualquer coisa nova, o schema existente foi inspecionado a fundo e avaliado como reutilizável — não é "estado corrompido": é um RBAC granular coerente, já com RLS e seed de papéis/permissões, e mais alinhado à exigência de "permissões granulares" do escopo do que uma versão simplificada com enum fixo teria sido.
+
+**Decisão**: adotar esse schema como fundação em vez de recriar um mais simples do zero. `src/server/db/schema/*.ts` (Drizzle) foi escrito para espelhar exatamente essas tabelas já existentes. A migration `0000_baseline.sql` documenta esse estado herdado sem executar nada (as tabelas já existem); só a partir da `0001` este projeto passa a gerar mudanças reais de schema.
+
+Já existia e foi mantido como está:
+- organização "Atlaz Company" (`orgs`, slug `atlaz`)
+- 8 papéis do escopo (`roles`, `is_system = true`)
+- 41 permissões granulares cobrindo todos os módulos do roadmap (`permissions`)
+- 85 vínculos papel↔permissão já concedidos (`role_permissions`)
+- RLS completo nas 8 tabelas + funções auxiliares em `atlaz.*` (ver docs/seguranca.md §3)
+- extensão `supabase_vault` já instalada (usada pelo Cofre, Fase 1+)
+
+O único gap encontrado: nenhuma trigger sincronizando `auth.users` → `public.users` no signup. Foi essa a única migration real escrita (`0001_auth_sync_trigger.sql`).
+
+## 2. Plataforma
 
 PostgreSQL gerenciado via **Supabase**. Acesso de aplicação por **Drizzle ORM**; acesso administrativo (migrations, RLS, funções) por SQL puro versionado.
 
-## 2. Fluxo de schema
+## 3. Fluxo de schema
 
-1. Alterar `src/server/db/schema/*.ts` (fonte de verdade em TypeScript).
+1. Alterar `src/server/db/schema/*.ts`.
 2. `npm run db:generate` → drizzle-kit gera SQL em `src/server/db/migrations/`.
-3. Revisar o SQL gerado manualmente (RLS e triggers não são geradas pelo Drizzle — entram como migration SQL manual complementar na mesma pasta).
+3. Revisar o SQL gerado manualmente (RLS e triggers não são geradas pelo Drizzle — entram como migration SQL manual complementar na mesma pasta, como a `0001`).
 4. `npm run db:migrate` aplica no Supabase configurado em `.env.local`.
-5. Nunca alterar tabela direto pelo painel do Supabase em produção sem depois refletir a mudança numa migration — schema manual sem registro é proibido (regra 56 do escopo).
+5. Nunca alterar tabela direto pelo painel do Supabase sem depois refletir a mudança numa migration.
 
-## 3. Modelo de dados — Fase 0
-
-Fase 0 cria só o necessário para autenticação, organização, papéis e auditoria. Módulos de negócio (clientes, projetos, CRM, financeiro, marketing...) entram nas fases seguintes, cada um com sua própria migration.
+## 4. Modelo de dados
 
 ```
-organizations
-  id           uuid PK default gen_random_uuid()
-  name         text not null                    -- "Atlaz Company"
-  slug         text unique not null
-  created_at   timestamptz not null default now()
+orgs                                              -- organização (hoje só "Atlaz Company")
+  id            uuid PK
+  slug          text unique                       -- "atlaz"
+  name          text
+  legal_name    text
+  settings      jsonb
+  created_at, updated_at
 
-profiles                                          -- espelha auth.users (1:1)
-  id           uuid PK references auth.users(id) on delete cascade
-  full_name    text
-  email        text not null
-  avatar_url   text
-  created_at   timestamptz not null default now()
-  updated_at   timestamptz not null default now()
+users                                              -- perfil interno, desacoplado de auth.users
+  id            uuid PK
+  auth_user_id  uuid unique references auth.users(id) on delete cascade
+  email         text
+  full_name     text
+  avatar_url    text
+  is_active     boolean
+  created_at, updated_at
 
-memberships                                       -- vínculo usuário ↔ organização ↔ papel
-  id           uuid PK default gen_random_uuid()
-  org_id       uuid not null references organizations(id) on delete cascade
-  user_id      uuid not null references profiles(id) on delete cascade
-  role         app_role not null                 -- enum, ver abaixo
-  created_at   timestamptz not null default now()
+roles                                              -- papel POR organização (não enum)
+  id            uuid PK
+  org_id        uuid references orgs(id)
+  key           text                               -- "super_admin", "ceo", "dev", ...
+  name          text                               -- "Super Admin", "CEO", "Desenvolvedor", ...
+  description   text
+  is_system     boolean                            -- true para os 8 papéis padrão
+  unique (org_id, key)
+  created_at, updated_at
+
+permissions                                        -- catálogo global de permissões granulares
+  key           text PK                            -- "resource:action", ex. "client:read"
+  resource      text
+  action        text
+  description   text
+
+role_permissions                                   -- concede uma permissão a um papel
+  role_id         uuid references roles(id)
+  permission_key  text references permissions(key)
+  primary key (role_id, permission_key)
+
+memberships                                        -- vínculo usuário ↔ organização ↔ papel
+  id            uuid PK
+  org_id        uuid references orgs(id)
+  user_id       uuid references users(id)
+  role_id       uuid references roles(id)
+  job_title     text
+  scope         text default 'org'
+  is_active     boolean
   unique (org_id, user_id)
+  created_at, updated_at
 
-audit_log                                         -- trilha de auditoria (seção 48 do escopo)
-  id           bigint generated always as identity PK
-  org_id       uuid references organizations(id)
-  actor_id     uuid references profiles(id)
-  action       text not null                      -- ex.: "membership.role_changed"
-  entity       text not null                       -- ex.: "membership"
-  entity_id    text
-  before       jsonb
-  after        jsonb
-  created_at   timestamptz not null default now()
+activity_events                                    -- timeline (escopo item 29) — ainda sem produtor
+  id, org_id, entity_type, entity_id, kind, summary, payload jsonb,
+  actor_user_id, source, occurred_at
+
+audit.log                                          -- auditoria (escopo item 48) — schema próprio
+  id, org_id, actor_user_id, actor_label, action, entity_type, entity_id,
+  before jsonb, after jsonb, context jsonb, at
 ```
+
+Toda tabela de negócio futura (clientes, projetos, domínios, chamados, propostas, contratos, financeiro, conteúdo...) carrega `org_id` e participa do mesmo padrão de RLS/permissão granular definido aqui.
+
+## 5. Funções auxiliares (schema `atlaz`, já existentes)
 
 ```sql
-create type app_role as enum (
-  'super_admin', 'ceo', 'socio', 'desenvolvedor',
-  'designer', 'social_media', 'financeiro', 'comercial'
-);
+atlaz.current_user_id()             -- id em public.users do usuário autenticado
+atlaz.current_org_id()              -- org_id da membership ativa do usuário autenticado
+atlaz.is_member()                   -- boolean: usuário tem membership ativa?
+atlaz.has_permission(p_permission)  -- boolean: papel do usuário tem essa permission_key?
+atlaz.set_updated_at()              -- trigger genérica para updated_at
 ```
 
-Todas as tabelas de negócio futuras (clientes, projetos, domínios, chamados, propostas, contratos, financeiro, conteúdo...) carregam `org_id` e, quando fizer sentido, `created_by`/`updated_by`, seguindo o mesmo padrão de auditoria e RLS por organização definido aqui.
+`atlaz.has_permission()` é a mesma função usada nas policies de RLS (ver docs/seguranca.md §3) — a aplicação usa o equivalente em TypeScript (`can()`, em `config/permissions.ts`) sobre as permissões já carregadas na sessão, para não fazer uma query extra por checagem.
 
-## 4. Índices e integridade
-
-- FK com `on delete cascade` só onde a entidade filha não faz sentido sem a pai (ex.: membership sem org); nos demais casos, `on delete restrict` para evitar perda de histórico (ex.: nunca apagar cliente com projetos ligados sem decisão explícita).
-- Índice em toda FK usada em filtro (`org_id`, `user_id` em `memberships`).
-- `created_at`/`updated_at` em toda tabela de negócio (obrigatório desde a Fase 0).
-- Soft delete (`deleted_at timestamptz`) será adotado nas tabelas de negócio a partir da Fase 1 (clientes, projetos, contratos) — não se aplica às tabelas de auth/org da Fase 0.
-
-## 5. Migrations aplicadas na Fase 0
+## 6. Migrations
 
 | Ordem | Migration | Conteúdo |
 |---|---|---|
-| 0001 | `init_enums_and_org` | `app_role`, `organizations` |
-| 0002 | `profiles_and_membership` | `profiles`, `memberships`, trigger de sincronização `auth.users` → `profiles` |
-| 0003 | `audit_log` | tabela `audit_log` |
-| 0004 | `rls_policies` | ativação de RLS + políticas (ver `docs/seguranca.md`) |
+| 0000 | `baseline` | Documenta o schema herdado (não executa nada — ver §1) |
+| 0001 | `auth_sync_trigger` | Trigger `auth.users` → `public.users` (único gap real encontrado) |
 
-## 6. Seed
+## 7. Seed
 
-`src/server/db/seed.ts` roda com a service role key (nunca com a chave pública) e é idempotente:
+`src/server/db/seed.ts` roda com `DATABASE_URL` (conexão direta, fora do RLS) e é idempotente:
 
-1. Garante a organização "Atlaz Company" (upsert por `slug`).
-2. Se `SUPER_ADMIN_EMAIL` (env) corresponder a um usuário já existente em `auth.users`, garante uma `membership` com `role = 'super_admin'` para ele nessa organização — sem criar usuário novo (ver `docs/seguranca.md`, bootstrap do super admin).
-3. Não insere nenhum dado de negócio fake (clientes, projetos etc.) — isso violaria a regra de não criar UI/dados fictícios sem indicar.
+1. Confirma que a organização "Atlaz Company" (slug `atlaz`) existe — **não a cria** (já existe).
+2. Busca o papel `super_admin` dessa organização.
+3. Se `SUPER_ADMIN_EMAIL` corresponder a um `public.users` já existente (populado pela trigger 0001 quando o usuário faz signup no Supabase Auth), garante uma `membership` com esse papel — sem criar usuário novo.
+4. Não insere nenhum dado de negócio fake (clientes, projetos etc.).

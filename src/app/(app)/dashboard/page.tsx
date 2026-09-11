@@ -18,9 +18,9 @@ export default async function DashboardPage() {
     return (
       <Alert variant="warning" title="Sem vínculo de equipe">
         Sua conta ({session.email}) está autenticada, mas ainda não tem uma <code>membership</code> na
-        Atlaz Company. Peça para um super admin te adicionar em Equipe, ou rode{" "}
-        <code>npm run db:seed</code> com <code>SUPER_ADMIN_EMAIL={session.email}</code> em{" "}
-        <code>.env.local</code>.
+        Atlaz Company{session.userId ? "" : " (nem um registro em public.users ainda)"}. Peça para um
+        super admin te adicionar em Equipe, ou rode <code>npm run db:seed</code> com{" "}
+        <code>SUPER_ADMIN_EMAIL={session.email}</code> em <code>.env.local</code>.
       </Alert>
     );
   }
@@ -32,7 +32,7 @@ export default async function DashboardPage() {
       <div>
         <div className="flex items-center gap-3">
           <h1 className="text-[22px] font-semibold text-ink-1">Dashboard</h1>
-          <Badge variant="accent">{session.membership.role}</Badge>
+          <Badge variant="accent">{session.membership.role.name}</Badge>
         </div>
         <p className="mt-1 text-sm text-ink-2">
           Visão executiva da {session.membership.org.name}.

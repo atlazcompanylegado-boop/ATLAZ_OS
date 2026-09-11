@@ -1,0 +1,25 @@
+-- BASELINE — não executa nada.
+--
+-- Este projeto Supabase já continha, quando adotado como base do ATLΛZ OS, todo o
+-- schema abaixo (orgs, users, roles, permissions, role_permissions, memberships,
+-- activity_events, audit.log), já com RLS e as funções auxiliares em `atlaz.*`
+-- aplicadas por uma migration do projeto anterior (rastreada em
+-- `public._atlaz_migrations`, fora do Drizzle). Ver docs/banco.md §1.
+--
+-- As instruções CREATE completas ficam comentadas abaixo só como documentação do
+-- estado herdado (é exatamente o que `drizzle-kit generate` produziria do zero a
+-- partir de src/server/db/schema/) — não são executadas por `npm run db:migrate`.
+-- Dali pra frente, toda mudança real de schema vira uma migration nova de verdade
+-- nesta pasta (a próxima, 0001, já é uma: o trigger que faltava).
+--
+-- CREATE SCHEMA "audit";
+-- CREATE TABLE "orgs" (...);
+-- CREATE TABLE "users" (...);
+-- CREATE TABLE "roles" (...);
+-- CREATE TABLE "permissions" (...);
+-- CREATE TABLE "role_permissions" (...);
+-- CREATE TABLE "memberships" (...);
+-- CREATE TABLE "activity_events" (...);
+-- CREATE TABLE "audit"."log" (...);
+-- (+ todas as FKs — ver a primeira versão gerada por `drizzle-kit generate` no
+-- histórico do git, ou rode `drizzle-kit generate` de novo contra um projeto vazio.)

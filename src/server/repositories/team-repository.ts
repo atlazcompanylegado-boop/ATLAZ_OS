@@ -1,7 +1,7 @@
 import "server-only";
 import { eq, count } from "drizzle-orm";
 import { getDb } from "@/server/db/client";
-import { memberships, profiles } from "@/server/db/schema";
+import { memberships, users, roles } from "@/server/db/schema";
 
 /** Só acesso a dado — nenhuma regra de negócio aqui (ver docs/arquitetura.md §3). */
 export async function countMembersByOrg(orgId: string): Promise<number> {
@@ -14,9 +14,10 @@ export async function countMembersByOrg(orgId: string): Promise<number> {
 
 export interface MemberRow {
   membershipId: string;
-  role: string;
+  roleKey: string;
+  roleName: string;
   email: string;
-  fullName: string | null;
+  fullName: string;
   createdAt: Date;
 }
 
@@ -24,13 +25,15 @@ export async function listMembersByOrg(orgId: string): Promise<MemberRow[]> {
   return getDb()
     .select({
       membershipId: memberships.id,
-      role: memberships.role,
-      email: profiles.email,
-      fullName: profiles.fullName,
+      roleKey: roles.key,
+      roleName: roles.name,
+      email: users.email,
+      fullName: users.fullName,
       createdAt: memberships.createdAt,
     })
     .from(memberships)
-    .innerJoin(profiles, eq(memberships.userId, profiles.id))
+    .innerJoin(users, eq(memberships.userId, users.id))
+    .innerJoin(roles, eq(memberships.roleId, roles.id))
     .where(eq(memberships.orgId, orgId))
     .orderBy(memberships.createdAt);
 }

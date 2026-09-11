@@ -49,6 +49,10 @@ GitHub (commits/PRs/issues via adapter), Vercel/Render/Cloudflare (status de dep
 - Fase 5 (Intelligence) depende de volume real de conteúdo/dados das Fases 1–3 para ser útil — não adianta adiantar.
 - Fase 6 (GitHub/Deploy) pode começar a estrutura de dados (campos de repositório/branch em Projetos) já na Fase 1, mas a integração viva (webhooks, chamadas reais) só entra na Fase 6.
 
+## Decisão: adoção do schema herdado
+
+O projeto Supabase configurado para o ATLΛZ OS já continha um schema RBAC completo de uma sessão anterior de trabalho na "F:\atlaz company" (org, papéis, 41 permissões granulares, RLS, funções `atlaz.*`) — avaliado e adotado como base em vez de recriado do zero, por ser mais alinhado ao pedido de "permissões granulares" (item 36 do escopo) do que a versão simplificada com enum fixo construída inicialmente. Ver docs/banco.md §1 para o inventário completo do que foi herdado.
+
 ## Riscos conhecidos (Fase 0)
 
 - **`drizzle-kit` carrega uma versão antiga de `esbuild` (moderada, GHSA-67mh-4wv8-2f99)** por uma dependência transitiva (`@esbuild-kit/*`) que ainda não foi atualizada upstream. Afeta só a CLI de migration em uso local (nunca o app publicado); `npm audit` sugere downgrade do `drizzle-kit`, o que pioraria a situação — decisão consciente de aceitar o risco e revisar quando a dependência for corrigida upstream.
