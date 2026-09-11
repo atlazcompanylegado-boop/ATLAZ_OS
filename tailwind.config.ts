@@ -37,6 +37,11 @@ const config: Config = {
         success: "var(--success)",
         warning: "var(--warning)",
         danger: "var(--danger)",
+        role: {
+          bg: "var(--role-bg)",
+          border: "var(--role-border)",
+          ink: "var(--role-ink)",
+        },
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
@@ -51,6 +56,14 @@ const config: Config = {
         sm: "var(--shadow-sm)",
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
+        glow: "var(--glow-accent)",
+        "glow-focus": "var(--glow-accent-focus)",
+      },
+      backgroundImage: {
+        "gradient-accent": "var(--gradient-accent)",
+      },
+      backdropBlur: {
+        glass: "var(--glass-blur)",
       },
       transitionDuration: {
         DEFAULT: "160ms",

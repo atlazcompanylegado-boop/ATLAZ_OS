@@ -46,23 +46,26 @@ export function GlobalSearch() {
       <DialogPrimitive.Trigger asChild>
         <button
           className={cn(
-            "flex h-8 w-56 items-center gap-2 rounded-sm border border-border bg-surface-2 px-3 text-sm text-ink-3",
-            "transition-colors duration-150 hover:border-border-strong hover:text-ink-2",
+            "flex h-8 items-center gap-2 rounded-sm border border-border bg-surface-2 px-3 text-sm text-ink-3",
+            "w-8 justify-center sm:w-56 sm:justify-start",
+            "transition-colors duration-200 hover:border-border-strong hover:text-ink-2",
+            "focus-within:shadow-glow-focus",
           )}
+          aria-label="Buscar no ATLΛZ OS"
         >
-          <SearchIcon className="h-3.5 w-3.5" strokeWidth={1.5} />
-          <span className="flex-1 text-left">Buscar...</span>
-          <kbd className="rounded border border-border px-1 text-[10px] text-ink-3">Ctrl K</kbd>
+          <SearchIcon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
+          <span className="hidden flex-1 text-left sm:inline">Buscar...</span>
+          <kbd className="hidden rounded border border-border bg-surface-3 px-1 text-[10px] text-ink-3 sm:inline">Ctrl K</kbd>
         </button>
       </DialogPrimitive.Trigger>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60" />
         <DialogPrimitive.Content
-          className="fixed left-1/2 top-32 z-50 w-full max-w-lg -translate-x-1/2 rounded-lg border border-border bg-surface-2 shadow-lg focus:outline-none"
+          className="surface-elevation-4 fixed left-1/2 top-24 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 rounded-lg border focus:outline-none sm:top-32"
           aria-describedby={undefined}
         >
           <DialogPrimitive.Title className="sr-only">Busca global</DialogPrimitive.Title>
-          <div className="flex items-center gap-2 border-b border-border px-4">
+          <div className="flex items-center gap-2 border-b border-[var(--glass-border)] px-4 focus-within:shadow-glow-focus">
             <SearchIcon className="h-4 w-4 text-ink-3" strokeWidth={1.5} />
             <input
               autoFocus
@@ -80,13 +83,11 @@ export function GlobalSearch() {
                 <button
                   key={item.href}
                   onClick={() => go(item.href)}
-                  className="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-left text-sm text-ink-1 hover:bg-surface-3"
+                  className="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-left text-sm text-ink-1 transition-colors duration-150 hover:bg-surface-3"
                 >
                   <item.icon className="h-4 w-4 text-ink-3" strokeWidth={1.5} />
                   <span className="flex-1">{item.label}</span>
-                  {item.status === "planned" ? (
-                    <Badge variant="neutral">{item.phase}</Badge>
-                  ) : null}
+                  {item.status === "planned" ? <Badge variant="tag">{item.phase}</Badge> : null}
                 </button>
               ))
             )}

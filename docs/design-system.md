@@ -98,15 +98,13 @@ Construídos em `src/components/ui/`, cada um com variantes via CVA e tokens aci
 
 Fase 0 entrega: `Button`, `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`, `Card`, `KpiCard`, `Badge`, `Avatar`, `Tabs`, `Table`, `Tooltip`, `Dropdown (Menu)`, `Modal (Dialog)`, `Drawer`, `Toast`, `Alert`, `EmptyState`, `Skeleton`, `Breadcrumb`, `Search`.
 
-Adiado para quando o módulo que precisa existir (evita componente sem uso real): `DatePicker`, `Upload`, `ConfirmDialog` avançado (Fase 0 usa `Modal` genérico para confirmação).
-
 ## 11. Sidebar e Topbar
 
 Ver `docs/arquitetura.md` para estrutura de rotas. Especificação visual:
 
-**Sidebar**: fundo `--surface-1`, 264px expandida / 72px recolhida, agrupada por seção (VISÃO, OPERAÇÃO, COMERCIAL, GESTÃO, MARKETING, INTELLIGENCE, SEGURANÇA, SISTEMA) com label pequeno (`label` token) acima de cada grupo. Item ativo: barra vertical `--accent` de 2px à esquerda + texto `--ink-1`; inativo `--ink-2`. Sem emoji, ícone lucide 18px antes do texto.
+**Sidebar**: `.surface-elevation-1` (glass leve), 264px expandida / 72px recolhida, agrupada por seção (VISÃO, OPERAÇÃO, COMERCIAL, GESTÃO, MARKETING, INTELLIGENCE, SEGURANÇA, SISTEMA) com label pequeno (`label` token) acima de cada grupo. Item ativo (ver §13): barra `--accent` de 3px à esquerda + fundo `accent-muted` + borda `accent/20` + `shadow-glow` — três sinais, não só cor; inativo `--ink-2`. Sem emoji, ícone lucide 18px antes do texto.
 
-**Topbar**: 56px de altura, `--surface-0`, borda inferior fina. Da esquerda para a direita: breadcrumb, busca global (atalho `⌘K`/`Ctrl K`), notificações, seletor de contexto (organização/ambiente), avatar do usuário.
+**Topbar**: 56px de altura, `.surface-elevation-1` (glass leve), borda inferior fina. Da esquerda para a direita: (hambúrguer só <768px), breadcrumb, busca global (atalho `⌘K`/`Ctrl K`), notificações, seletor de contexto (organização/ambiente), avatar do usuário.
 
 ## 12. Breakpoints
 
@@ -115,3 +113,37 @@ sm 640  md 768  lg 1024  xl 1280  2xl 1536
 ```
 
 Prioridade de desenho: 1440/1920 (desktop), 1366 (notebook comum), 768 (tablet). Mobile permanece funcional (stack vertical, sidebar vira drawer) mas não é o alvo principal.
+
+## 13. Fase 1 — acabamento premium (glass, glow, elevação)
+
+Camada aditiva sobre os tokens da Fase 0 (nenhum valor acima foi removido/renomeado). Objetivo: dar profundidade real ao shell sem recorrer a sombras pesadas ou vermelho decorativo. Tokens novos em `globals.css` `:root` + espelho em `src/design-system/tokens.ts` (`glass`, `glow`, `gradient`, `scrollbar`, `role`).
+
+**Hierarquia de superfícies (elevação):**
+
+```
+Nível 0  background do app         surface-0 + .atlaz-ambient + silhueta do Atlas invertida (ver abaixo)
+Nível 1  sidebar / topbar          .surface-elevation-1  (glass leve: --glass-bg + blur)
+Nível 2  sections                  surface-2 (sem glass — só hierarquia de cor)
+Nível 3  cards                     surface-2 + shadow-sm, hover eleva para shadow-md + glow
+Nível 4  modal / dropdown / select /
+         command palette / drawer  .surface-elevation-4  (glass forte: --glass-bg-strong + blur + shadow-lg)
+```
+
+**Regra dura do vermelho (glow/gradient-accent):** só aparece em estado de interação ou item realmente especial — hover de card, foco de input/busca, item ativo da sidebar, botão primário, badge de papel institucional. Nunca como decoração em repouso. `--glow-accent` e `--glow-accent-focus` existem exatamente para isso; não aplicar em estado `:not(:hover, :focus, [data-active])`.
+
+**Badge — duas variantes novas, papéis diferentes:**
+- `tag` — status/fase (“Fase 1”), compacta e discreta, nunca mais chamativa que o rótulo ao lado.
+- `role` — cargo institucional (“SUPER ADMIN”), vermelho bem escuro/dessaturado (`--role-*`), não o accent vivo.
+
+**Sidebar responsiva** (sem `matchMedia`, só breakpoints Tailwind — ver `sidebar.tsx`/`sidebar-nav.tsx`/`mobile-nav.tsx`):
+- `<768px` (md): oculta, navegação em drawer (`MobileNav`, `Drawer` com `side="left"`).
+- `768–1023px`: nasce compacta (72px) — único intervalo realmente apertado (tablet).
+- `≥1024px` (lg): nasce expandida (264px) — cobre notebooks/desktops comuns sem forçar modo compacto. Toggle manual sempre sobrepõe o automático.
+
+**Botão `loading`:** prop ortogonal à `variant` (`<Button loading>`), spinner (`Loader2`) substituindo o texto por um ícone ao lado, sem mudar largura; força `disabled` + `aria-busy`.
+
+**Login — a imagem oficial é o plano de fundo, literalmente:** `src/components/brand/atlas-login-bg.png` é a arte original, inteira, sem recorte — ela já traz o wordmark "ATLAZ OS", então a UI não desenha um título por cima (seria duplicado). `object-contain` abaixo de `lg` (nada é cortado — como o fundo da página é o mesmo off-white da arte, a "sobra" do contain é invisível) e `object-cover` a partir de `lg` (proporção da arte ~16:9, já próxima da maioria das telas largas, corte mínimo). Formulário ancorado na metade inferior da composição, que é o espaço vazio da própria arte.
+
+**Ambientação do shell (dashboard e demais telas dark) deriva da mesma arte, não de gradientes soltos:** `AmbientBackground` (`src/components/layout/ambient-background.tsx`) usa a própria `atlas-login-bg.png` — `filter: invert(1) grayscale(1)` + `mix-blend-mode: screen` + opacidade ~0.05 — para que a silhueta do Atlas apareça como um traço claro sangrando no canto inferior direito e o fundo claro da arte desapareça no escuro do app; `OrbitLines` reforça o mesmo motivo por cima, ainda mais apagado (~0.07). É essa combinação — não os dois radiais isolados de `.atlaz-ambient` — que faz o dashboard ler como "vindo" da mesma peça do login.
+
+Adiado para quando o módulo que precisa existir (evita componente sem uso real): `DatePicker`, `Upload`, `ConfirmDialog` avançado (Fase 0 usa `Modal` genérico para confirmação).

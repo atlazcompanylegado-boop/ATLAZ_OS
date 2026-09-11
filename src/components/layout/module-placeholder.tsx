@@ -20,8 +20,8 @@ export function ModulePlaceholder({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <h1 className="text-[22px] font-semibold text-ink-1">{title}</h1>
-        <Badge variant="neutral">{phase}</Badge>
+        <h1 className="font-display text-[26px] text-ink-1">{title}</h1>
+        <Badge variant="tag">{phase}</Badge>
       </div>
       <EmptyState
         icon={icon}

@@ -10,15 +10,16 @@ const DrawerClose = DialogPrimitive.Close;
 
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { side?: "left" | "right" }
+>(({ className, children, side = "right", ...props }, ref) => (
   <DialogPrimitive.Portal>
     <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60" />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed right-0 top-0 z-50 h-full w-full max-w-md border-l border-border bg-surface-1 shadow-lg",
-        "flex flex-col focus:outline-none",
+        "fixed top-0 z-50 h-full w-full max-w-md shadow-lg",
+        side === "left" ? "left-0 border-r border-border" : "right-0 border-l border-border",
+        "surface-elevation-4 flex flex-col focus:outline-none",
         className,
       )}
       {...props}

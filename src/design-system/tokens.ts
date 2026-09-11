@@ -64,3 +64,39 @@ export const breakpoint = {
   xl: 1280,
   "2xl": 1536,
 } as const;
+
+/**
+ * Camada de acabamento premium (Fase 1 — refatoração visual). Aditiva: espelha os
+ * novos CSS custom properties de src/app/globals.css. Regra dura: glow/accent só
+ * em estado de interação (hover/focus/active), nunca decoração permanente.
+ */
+export const glass = {
+  bg: "rgba(19, 19, 21, 0.72)",
+  bgStrong: "rgba(27, 27, 30, 0.88)",
+  border: "rgba(245, 245, 244, 0.08)",
+  blur: "14px",
+} as const;
+
+export const glow = {
+  accent: "0 0 0 1px rgba(138, 21, 34, 0.32), 0 0 20px rgba(138, 21, 34, 0.14)",
+  accentFocus: "0 0 0 3px rgba(138, 21, 34, 0.15)",
+} as const;
+
+export const gradient = {
+  accent: "linear-gradient(135deg, #8A1522 0%, #A31D2C 100%)",
+  ambientA: "radial-gradient(60% 50% at 85% 0%, rgba(138, 21, 34, 0.07), transparent 70%)",
+  ambientB: "radial-gradient(50% 40% at 8% 100%, rgba(245, 245, 244, 0.035), transparent 70%)",
+} as const;
+
+export const scrollbar = {
+  track: "transparent",
+  thumb: "rgba(245, 245, 244, 0.14)",
+  thumbHover: "rgba(245, 245, 244, 0.24)",
+} as const;
+
+/** Badge institucional de papel/cargo (ex.: SUPER ADMIN) — distinto do badge de fase. */
+export const role = {
+  bg: "rgba(90, 16, 24, 0.16)",
+  border: "rgba(163, 29, 44, 0.35)",
+  ink: "#C98D90",
+} as const;

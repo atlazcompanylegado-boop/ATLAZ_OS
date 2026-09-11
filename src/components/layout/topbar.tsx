@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, LogOut, User as UserIcon } from "lucide-react";
+import { Bell, LogOut, Menu, User as UserIcon } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { GlobalSearch } from "@/components/ui/search";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -22,13 +22,22 @@ function initials(nameOrEmail: string) {
   return base.slice(0, 2).toUpperCase();
 }
 
-export function Topbar({ userLabel }: { userLabel: string }) {
+export function Topbar({ userLabel, onOpenMobileNav }: { userLabel: string; onOpenMobileNav: () => void }) {
   const pathname = usePathname();
   const current = FLAT_NAVIGATION.find((item) => pathname.startsWith(item.href));
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-surface-0 px-6">
-      <Breadcrumb items={[{ label: "ATLΛZ OS", href: "/dashboard" }, { label: current?.label ?? "" }]} />
+    <header className="surface-elevation-1 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-[var(--glass-border)] px-4 md:px-6">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onOpenMobileNav}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-ink-2 transition-colors duration-200 hover:bg-surface-2 hover:text-ink-1 md:hidden"
+          aria-label="Abrir navegação"
+        >
+          <Menu className="h-[18px] w-[18px]" strokeWidth={1.5} />
+        </button>
+        <Breadcrumb items={[{ label: "ATLΛZ OS", href: "/dashboard" }, { label: current?.label ?? "" }]} />
+      </div>
 
       <div className="flex items-center gap-3">
         <GlobalSearch />

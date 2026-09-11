@@ -31,8 +31,8 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="text-[22px] font-semibold text-ink-1">Dashboard</h1>
-          <Badge variant="accent">{session.membership.role.name}</Badge>
+          <h1 className="font-display text-[26px] text-ink-1">Dashboard</h1>
+          <Badge variant="role">{session.membership.role.name}</Badge>
         </div>
         <p className="mt-1 text-sm text-ink-2">
           Visão executiva da {session.membership.org.name}.

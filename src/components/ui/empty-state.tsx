@@ -16,15 +16,15 @@ export function EmptyState({ icon: Icon, title, description, action, className }
   return (
     <div
       className={cn(
-        "relative flex flex-col items-center justify-center gap-3 overflow-hidden rounded-md border border-dashed border-border px-6 py-16 text-center",
+        "relative flex flex-col items-center justify-center gap-3 overflow-hidden rounded-md border border-border bg-surface-1/40 px-6 py-10 text-center",
         className,
       )}
     >
-      <ParticleField className="pointer-events-none absolute inset-0 h-full w-full text-ink-3" opacity={0.08} />
+      <ParticleField className="pointer-events-none absolute inset-0 h-full w-full text-ink-3" opacity={0.06} />
       <div className="relative z-10 flex flex-col items-center gap-3">
         {Icon ? (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface-2">
-            <Icon className="h-5 w-5 text-ink-3" strokeWidth={1.5} />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-2">
+            <Icon className="h-4 w-4 text-ink-3" strokeWidth={1.5} />
           </div>
         ) : null}
         <div className="space-y-1">

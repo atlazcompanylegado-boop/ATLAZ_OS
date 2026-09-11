@@ -34,6 +34,33 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55);
+
+  /*
+    Camada de acabamento premium (Fase 1 — refatoração visual).
+    Aditiva: nenhum token acima é removido ou reinterpretado. Ver docs/design-system.md.
+    Regra dura: glow/accent aqui só aparecem em estado de interação (hover/focus/active) —
+    nunca como decoração permanente. Ver §2 do design-system.
+  */
+  --glass-bg: rgba(19, 19, 21, 0.72);
+  --glass-bg-strong: rgba(27, 27, 30, 0.88);
+  --glass-border: rgba(245, 245, 244, 0.08);
+  --glass-blur: 14px;
+
+  --glow-accent: 0 0 0 1px rgba(138, 21, 34, 0.32), 0 0 20px rgba(138, 21, 34, 0.14);
+  --glow-accent-focus: 0 0 0 3px rgba(138, 21, 34, 0.15);
+
+  --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+  --gradient-ambient-a: radial-gradient(60% 50% at 85% 0%, rgba(138, 21, 34, 0.07), transparent 70%);
+  --gradient-ambient-b: radial-gradient(50% 40% at 8% 100%, rgba(245, 245, 244, 0.035), transparent 70%);
+
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(245, 245, 244, 0.14);
+  --scrollbar-thumb-hover: rgba(245, 245, 244, 0.24);
+
+  /* Badge institucional de papel/cargo (ex.: SUPER ADMIN) — distinto do badge de fase. */
+  --role-bg: rgba(90, 16, 24, 0.16);
+  --role-border: rgba(163, 29, 44, 0.35);
+  --role-ink: #c98d90;
 }
 
 /* Variante institucional: off-white, para telas editoriais (login, splash). */
@@ -91,4 +118,53 @@ body {
   .skeleton {
     animation: none;
   }
+}
+
+/*
+  Elevação de superfície (dark glass). Ver docs/design-system.md §17/§19.
+  elevation-1: sidebar/topbar — glass leve, ainda deixa o ambient do shell vazar atrás.
+  elevation-4: modal/dropdown/popover/command palette — glass mais opaco, precisa
+  legibilidade garantida sobre qualquer conteúdo por trás.
+*/
+.surface-elevation-1 {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.surface-elevation-4 {
+  background-color: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-color: var(--glass-border);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Ambientação do shell — luz muito discreta atrás da sidebar/topbar translúcidas. */
+.atlaz-ambient {
+  background-image: var(--gradient-ambient-a), var(--gradient-ambient-b);
+}
+
+/* Scrollbar discreta — grafite, nunca a barra branca padrão do navegador. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+::-webkit-scrollbar {
+  width: var(--scrollbar-size, 8px);
+  height: var(--scrollbar-size, 8px);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
 }
