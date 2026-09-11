@@ -128,14 +128,14 @@ body {
 */
 .surface-elevation-1 {
   background-color: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
 }
 
 .surface-elevation-4 {
   background-color: var(--glass-bg-strong);
-  backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
   border-color: var(--glass-border);
   box-shadow: var(--shadow-lg);
 }
@@ -167,4 +167,34 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: var(--scrollbar-thumb-hover);
+}
+
+/*
+  Ilha escura dentro de uma página em tema institucional (ex.: painel de login
+  sobre a arte off-white) — reaplica os valores dark de superfície/tinta para
+  os descendentes, sem afetar o resto da página. Combinar com .surface-elevation-4
+  (fundo/borda/sombra do glass já são theme-independent). Ver docs/design-system.md.
+*/
+.atlaz-dark-scope {
+  --surface-0: #0a0a0b;
+  --surface-1: #131315;
+  --surface-2: #1b1b1e;
+  --surface-3: #242427;
+  --border: #2a2a2e;
+  --border-strong: #38383d;
+  --ink-1: #f5f5f4;
+  --ink-2: #a8a8ac;
+  --ink-3: #6e6e73;
+}
+
+/* Autofill do navegador — mantém a identidade do ATLΛZ OS em vez do amarelo padrão. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--ink-1);
+  -webkit-box-shadow: 0 0 0px 1000px var(--surface-2) inset;
+  box-shadow: 0 0 0px 1000px var(--surface-2) inset;
+  caret-color: var(--ink-1);
+  transition: background-color 9999s ease-in-out 0s;
 }
