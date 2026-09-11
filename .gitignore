@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+build/
+dist/
+
+# env — nunca versionar segredo
+.env
+.env.local
+.env.*.local
+
+# testing
+coverage/
+
+# logs
+npm-debug.log*
+*.log
+
+# editor / os
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
