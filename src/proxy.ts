@@ -8,7 +8,7 @@ const PUBLIC_PATHS = ["/login"];
  * autenticado para quem não tem sessão. RLS no banco é a segunda camada — ver
  * docs/seguranca.md. Esta é a primeira (evita nem carregar a tela).
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
