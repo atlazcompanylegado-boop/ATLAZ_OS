@@ -49,6 +49,12 @@ GitHub (commits/PRs/issues via adapter), Vercel/Render/Cloudflare (status de dep
 - Fase 5 (Intelligence) depende de volume real de conteúdo/dados das Fases 1–3 para ser útil — não adianta adiantar.
 - Fase 6 (GitHub/Deploy) pode começar a estrutura de dados (campos de repositório/branch em Projetos) já na Fase 1, mas a integração viva (webhooks, chamadas reais) só entra na Fase 6.
 
+## Riscos conhecidos (Fase 0)
+
+- **`drizzle-kit` carrega uma versão antiga de `esbuild` (moderada, GHSA-67mh-4wv8-2f99)** por uma dependência transitiva (`@esbuild-kit/*`) que ainda não foi atualizada upstream. Afeta só a CLI de migration em uso local (nunca o app publicado); `npm audit` sugere downgrade do `drizzle-kit`, o que pioraria a situação — decisão consciente de aceitar o risco e revisar quando a dependência for corrigida upstream.
+- **Marca "Atlas segurando o mundo"** (`src/components/brand/atlas-mark.tsx`) é um placeholder geométrico, não o logotipo real da Atlaz Company. Trocar pelos arquivos oficiais assim que o Brand Kit (Fase 3, §42) receber os assets — ou antes, se o usuário fornecer os arquivos.
+- **Projeto vive dentro do OneDrive** (`C:\Users\ponte\OneDrive\Desktop\Legado Atlaz OS`, não `F:\Legado Atlaz OS` como pedido originalmente — essa pasta não existe neste computador). Ver README.md para a exclusão recomendada de `node_modules`/`.next` da sincronização.
+
 ## Relatório de fase
 
 Ao final de cada fase, relatório com: arquivos criados/alterados, migrations, tabelas, endpoints/actions, componentes, dependências adicionadas, testes, riscos e pendências, próximos passos — conforme item 70 do escopo original.
