@@ -1,8 +1,8 @@
 import "server-only";
-import { eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { getDb } from "@/server/db/client";
-import { users, memberships, roles, orgs, rolePermissions } from "@/server/db/schema";
+import { users, memberships, roles, orgs, rolePermissions, permissions } from "@/server/db/schema";
 
 export interface CurrentSession {
   /** id em public.users (não o id do Supabase Auth). */
@@ -11,8 +11,10 @@ export interface CurrentSession {
   email: string;
   membership: {
     id: string;
+    /** Escopos desconhecidos também são preservados para negação explícita pelo módulo. */
+    scope: string;
     role: { id: string; key: string; name: string };
-    /** Chaves de public.permissions concedidas ao papel — ver config/permissions.ts. */
+    /** Permissões efetivas; super_admin recebe o catálogo, conforme atlaz.has_permission(). */
     permissions: string[];
     org: { id: string; slug: string; name: string };
   } | null;
@@ -39,12 +41,17 @@ export async function getCurrentSession(): Promise<CurrentSession | null> {
     return { userId: "", authUserId: user.id, email: user.email, membership: null };
   }
 
+  // Uma sessão Auth válida não reativa um perfil interno desativado.
+  if (!profile.isActive) return null;
+
   const [row] = await db
     .select({
       membershipId: memberships.id,
+      scope: memberships.scope,
       roleId: roles.id,
       roleKey: roles.key,
       roleName: roles.name,
+      roleOrgId: roles.orgId,
       orgId: orgs.id,
       orgSlug: orgs.slug,
       orgName: orgs.name,
@@ -52,17 +59,24 @@ export async function getCurrentSession(): Promise<CurrentSession | null> {
     .from(memberships)
     .innerJoin(roles, eq(memberships.roleId, roles.id))
     .innerJoin(orgs, eq(memberships.orgId, orgs.id))
-    .where(eq(memberships.userId, profile.id))
+    .where(and(eq(memberships.userId, profile.id), eq(memberships.isActive, true)))
+    .orderBy(asc(memberships.createdAt), asc(memberships.id))
     .limit(1);
 
-  if (!row) {
+  // Não trocar silenciosamente para outra organização quando o vínculo é inválido.
+  if (!row || row.roleOrgId !== row.orgId) {
     return { userId: profile.id, authUserId: user.id, email: user.email, membership: null };
   }
 
-  const permissionRows = await db
-    .select({ key: rolePermissions.permissionKey })
-    .from(rolePermissions)
-    .where(eq(rolePermissions.roleId, row.roleId));
+  // Único tratamento especial do papel, lido do banco e nunca do metadata/JWT.
+  // Não altera grants, nem concede permissões a CEO ou a outros papéis sem grants.
+  const permissionRows = row.roleKey === "super_admin"
+    ? await db.select({ key: permissions.key }).from(permissions).orderBy(asc(permissions.key))
+    : await db
+        .select({ key: rolePermissions.permissionKey })
+        .from(rolePermissions)
+        .where(eq(rolePermissions.roleId, row.roleId))
+        .orderBy(asc(rolePermissions.permissionKey));
 
   return {
     userId: profile.id,
@@ -70,6 +84,7 @@ export async function getCurrentSession(): Promise<CurrentSession | null> {
     email: user.email,
     membership: {
       id: row.membershipId,
+      scope: row.scope,
       role: { id: row.roleId, key: row.roleKey, name: row.roleName },
       permissions: permissionRows.map((p) => p.key),
       org: { id: row.orgId, slug: row.orgSlug, name: row.orgName },

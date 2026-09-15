@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentSession } from "@/lib/auth/session";
 import { Shell } from "@/components/layout/shell";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -15,5 +16,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const userLabel = user.user_metadata?.full_name ?? user.email ?? "Usuário Atlaz";
 
-  return <Shell userLabel={userLabel}>{children}</Shell>;
+  // Só para decidir quais itens de navegação aparecem (ex.: Clientes exige
+  // `client:read`); a autorização de verdade continua sendo feita por cada
+  // página/service — isto nunca é a única barreira.
+  const session = await getCurrentSession();
+  const permissions = session?.membership?.permissions;
+
+  return (
+    <Shell userLabel={userLabel} permissions={permissions}>
+      {children}
+    </Shell>
+  );
 }

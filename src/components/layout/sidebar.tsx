@@ -11,11 +11,13 @@ export function Sidebar({
   onToggle,
   mobileOpen,
   onMobileOpenChange,
+  permissions,
 }: {
   collapsed: boolean;
   onToggle: () => void;
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
+  permissions?: readonly string[];
 }) {
   return (
     <>
@@ -45,7 +47,7 @@ export function Sidebar({
           </span>
         </div>
 
-        <SidebarNav labelMode={collapsed ? "hidden" : "responsive"} />
+        <SidebarNav labelMode={collapsed ? "hidden" : "responsive"} permissions={permissions} />
 
         <button
           onClick={onToggle}
@@ -55,7 +57,7 @@ export function Sidebar({
         </button>
       </aside>
 
-      <MobileNav open={mobileOpen} onOpenChange={onMobileOpenChange} />
+      <MobileNav open={mobileOpen} onOpenChange={onMobileOpenChange} permissions={permissions} />
     </>
   );
 }

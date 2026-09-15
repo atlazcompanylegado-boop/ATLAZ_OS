@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search as SearchIcon } from "lucide-react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
-import { FLAT_NAVIGATION } from "@/config/navigation";
+import { getVisibleFlatNavigation } from "@/config/navigation";
 import { Badge } from "@/components/ui/badge";
 
 /**
@@ -13,10 +13,11 @@ import { Badge } from "@/components/ui/badge";
  * ATLΛZ OS (existentes e planejados). Cada fase futura soma suas próprias
  * entidades (clientes, projetos, leads...) a este índice — ver docs/roadmap.md.
  */
-export function GlobalSearch() {
+export function GlobalSearch({ permissions }: { permissions?: readonly string[] } = {}) {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const router = useRouter();
+  const flatNavigation = React.useMemo(() => getVisibleFlatNavigation(permissions), [permissions]);
 
   React.useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -31,9 +32,9 @@ export function GlobalSearch() {
 
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return FLAT_NAVIGATION;
-    return FLAT_NAVIGATION.filter((item) => item.label.toLowerCase().includes(q));
-  }, [query]);
+    if (!q) return flatNavigation;
+    return flatNavigation.filter((item) => item.label.toLowerCase().includes(q));
+  }, [query, flatNavigation]);
 
   function go(href: string) {
     setOpen(false);

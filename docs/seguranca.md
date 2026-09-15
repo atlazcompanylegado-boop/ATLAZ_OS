@@ -2,7 +2,7 @@
 
 ## 1. Princípio
 
-Nenhuma permissão é confiável só porque a UI escondeu um botão. Toda ação sensível é validada em pelo menos duas camadas independentes: **aplicação** (service layer, antes de tocar o banco) e **banco** (RLS). As duas precisam concordar; se uma permitir e a outra negar, a operação falha.
+Nenhuma permissão é confiável só porque a UI escondeu um botão. Operações pela conexão Drizzle com **BYPASSRLS** exigem autorização na aplicação e filtros explícitos de organização. RLS protege o acesso como usuário final; não bloqueia consultas executadas pela conexão privilegiada. Constraints e transações continuam protegendo integridade nesse caminho.
 
 ## 2. RBAC — papéis e permissões
 
@@ -24,7 +24,9 @@ export function can(grantedPermissions: readonly string[] | undefined, permissio
 }
 ```
 
-`grantedPermissions` vem de `getCurrentSession()` (`src/lib/auth/session.ts`), que resolve `memberships.role_id → role_permissions → permissions.key` uma vez por request. `can()` é a única função que decide autorização na aplicação; usada em Server Actions e Route Handlers antes de qualquer leitura/escrita. Componentes de UI usam a mesma função só para *esconder* botão — nunca é a fonte de verdade.
+`grantedPermissions` vem de `getCurrentSession()` (`src/lib/auth/session.ts`). A sessão rejeita perfil inativo, seleciona membership ativa por `created_at, id`, valida a org do papel e inclui scope. `super_admin` recebe o catálogo, alinhado à exceção existente em `atlaz.has_permission()`; os demais papéis recebem apenas `role_permissions`. Nenhum grant extra foi dado ao CEO.
+
+`can()` verifica as permissões efetivas. Em Clientes, `authorizeClientSession()` também exige scope `org` e contexto válido: leitura requer `client:read`, escrita requer leitura + `client:write`. `assigned` é negado explicitamente. O futuro service deve chamar esse helper com a sessão obtida no servidor antes de acessar repositories. A UI não é a fonte de autoridade.
 
 ## 3. RLS (Row Level Security)
 
@@ -41,21 +43,26 @@ Exemplo de política real (`memberships`):
 
 ```sql
 create policy "memberships_write" on memberships
-  for all using (atlaz.has_permission('team:manage'));
+  for all using (org_id = atlaz.current_org_id() and atlaz.has_permission('team:manage'))
+  with check (org_id = atlaz.current_org_id() and atlaz.has_permission('team:manage'));
 ```
 
-Toda tabela de negócio futura (clientes, projetos, financeiro...) repete o padrão: policy de `select` restrita à organização corrente (`atlaz.current_org_id()`), policy de escrita condicionada a `atlaz.has_permission('<recurso>:write')`. `audit.log` é somente leitura para quem tem `audit:read`; escrita só pela service layer (nunca client-side, sem policy de insert para o papel `authenticated`).
+`clients` e `client_contacts` têm RLS e SELECT para authenticated com organização, `client:read`, usuário/membership ativos, scope `org` e papel coerente. Não há grants/policies de escrita direta nessas tabelas para authenticated/anon: as mutations deverão passar pelo servidor e pela transação de negócio.
 
-**Nuance importante**: `atlaz.current_org_id()`/`current_user_id()` dependem de `auth.uid()` — só resolvem de verdade quando a query roda *como* o usuário final (ex.: chamada direta do browser à API REST/Realtime do Supabase com a chave pública, ou uma futura Edge Function que propague o JWT do usuário). As queries do Next.js via Drizzle (`src/server/db/client.ts`) usam a `DATABASE_URL` — uma conexão privilegiada que **não passa** por RLS. Nesse caminho, quem garante o isolamento por organização e por permissão é a *service layer* (`can()` sobre `session.membership.permissions`, e todo `where` explícito por `org_id`) — RLS aqui é a segunda rede de segurança contra bug de código ou uso futuro de uma chave de menor privilégio, não o mecanismo que protege as queries do Drizzle em si.
+A migration 0003 removeu INSERT policies e grants de escrita pública em `audit.log`/`activity_events`. Timeline de `entity_type='client'` exige cliente existente e acessível via RLS; contatos usarão eventos no cliente pai. Outros tipos mantêm a leitura organizacional herdada. Auditoria detalhada exige `audit:read`.
+
+Também foi restringido UPDATE direto em `users` a nome/avatar, preservando a policy de perfil próprio. Antes, o usuário podia reativar o próprio `is_active`; esse caminho foi bloqueado. A conexão administrativa continua responsável pelas alterações de identidade/atividade.
+
+**Nuance importante**: `atlaz.current_org_id()`/`current_user_id()` dependem de `auth.uid()` e do contexto autenticado, como nas chamadas REST do Supabase com JWT. As queries do Next.js via Drizzle usam `DATABASE_URL` com **BYPASSRLS**. Nesse caminho, a service layer verifica sessão, scope e permissões; todo repository filtra `org_id`. RLS não compensa ausência dessas verificações na conexão privilegiada.
 
 ## 4. Autenticação e bootstrap do super admin
 
-- Login via **Supabase Auth** (email/senha nesta fase; SSO fica para fase de integrações). Sessão em cookie HTTP-only via `@supabase/ssr`, validada em `middleware.ts` para todo o grupo de rota `(app)`.
+- Login via **Supabase Auth** (email/senha nesta fase; SSO fica para fase de integrações). Sessão via cookies do `@supabase/ssr`, validada por `getUser()` em `src/proxy.ts` e no layout autenticado.
 - **Não existe endpoint de "virar admin".** O primeiro super admin é criado por `src/server/db/seed.ts`, rodado manualmente por um desenvolvedor com a `DATABASE_URL` local (conexão direta ao Postgres, fora do RLS — por isso o script nunca roda a partir de código exposto à aplicação):
   1. O usuário precisa **já existir** em `auth.users` (criado pelo fluxo normal de signup/convite do Supabase Auth) — o script nunca cria usuário novo nem senha.
   2. O script é idempotente: rodar de novo não duplica membership nem rebaixa quem já é super admin.
   3. `SUPER_ADMIN_EMAIL` fica em `.env.local`, nunca commitado.
-- Nenhuma rota HTTP pública promove papel. Mudança de papel depois do bootstrap passa pela tela de Equipe, protegida por `can(permissions, "team:manage")` + RLS (`memberships_write`).
+- Nenhuma rota HTTP pública promove papel. Equipe ainda é leitura; futuras alterações de papel deverão exigir `team:manage`. A lacuna herdada de leitura de Equipe sem `team:read` foi registrada na auditoria e não foi ampliada para Clientes.
 
 ## 5. Cofre de credenciais (preparação)
 
@@ -74,7 +81,9 @@ A Fase 0 não implementa o módulo completo (isso é Fase 1+), mas já reserva a
 
 ## 7. Auditoria
 
-Eventos mínimos gravados em `audit_log` desde a Fase 0: mudança de papel/membership, acesso a credencial do Cofre (quando existir), exclusão de registro. Cada módulo novo soma seus próprios eventos (exclusão de proposta, alteração de contrato, fechamento de chamado etc.) conforme entra — sempre a partir da service layer, nunca da UI.
+As tabelas `audit.log` e `activity_events` existiam sem produtores de negócio até o Checkpoint 1. O [Checkpoint 2](clientes-checkpoint-2.md) implementou os eventos de Clientes na mesma transação de cadastro/edição/contatos, usando ator da sessão e sem expor JSON de auditoria na timeline operacional. Falha de evento/auditoria reverte a operação inteira (testado).
+
+O Checkpoint 1 validou constraints, grants, RLS e rollback em PostgreSQL em memória, com claims simuladas. O [Checkpoint 3](clientes-checkpoint-3.md#7-resultado-do-teste-real-sem-membership) repetiu essa validação contra o Postgres real (não a fixture em memória) — perfil próprio visível, nenhum dado operacional exposto — mas ainda não é um login real via Supabase Auth/GoTrue (a claim JWT é simulada). Organizações, clientes, memberships alheias e eventos operacionais não podem ser expostos.
 
 ## 8. Superfície de ataque — checklist aplicado
 

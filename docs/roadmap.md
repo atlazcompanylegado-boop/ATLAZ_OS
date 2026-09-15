@@ -7,25 +7,36 @@ Referência completa do pedido original em `docs/` (arquitetura, design-system, 
 **Entrega:** projeto instalável, arquitetura definida, banco conectado, auth funcionando, design system base, shell (sidebar+topbar), login, dashboard vazio (sem dado fake).
 
 **Critério de saída (todos obrigatórios):**
-- [ ] dependências instaladas sem erro (`npm install`)
-- [ ] projeto roda localmente (`npm run dev`)
-- [ ] login funcionando contra Supabase Auth real
-- [ ] banco conectado (`DATABASE_URL` válido)
-- [ ] migrations aplicadas (0001–0004, ver `docs/banco.md`)
-- [ ] seed aplicado (organização Atlaz Company + bootstrap do super admin)
-- [ ] `npm run lint` verde
-- [ ] `npm run typecheck` verde
-- [ ] `npm run test` verde
-- [ ] `npm run build` verde
-- [ ] dashboard carrega (mesmo com empty states, sem dado fabricado)
-- [ ] RLS validado manualmente (usuário sem membership não enxerga nada)
-- [ ] super admin validado (login real acessa Equipe/Configurações)
+- [x] dependências instaladas sem erro (`npm install`; `npm run dev` já era usado pelos checkpoints anteriores)
+- [x] projeto roda localmente (`npm run dev`; usado para o QA visual real do Checkpoint 3)
+- [x] login funcionando contra Supabase Auth real (login real observado no Checkpoint 3, sessão de super admin)
+- [x] banco conectado (`DATABASE_URL` válido; verificado no Checkpoint 1 de Clientes)
+- [x] migrations aplicadas (0000–0003; hashes anteriores conferidos, ver `docs/banco.md`)
+- [ ] seed aplicado (organização Atlaz Company + bootstrap do super admin) — já existia antes deste checkpoint, não reexecutado
+- [x] lint verde (ESLint sem cache, reconfirmado no Checkpoint 3)
+- [x] typecheck verde (`tsc --noEmit`, reconfirmado no Checkpoint 3)
+- [x] testes verdes (152 testes no Checkpoint 3, ver `docs/clientes-checkpoint-3.md`)
+- [x] `npm run build` verde (Checkpoint 3)
+- [x] dashboard carrega (mesmo com empty states, sem dado fabricado; KPI de Clientes agora real, ver `docs/clientes-checkpoint-3.md`)
+- [x] RLS com login real sem membership: verificado no Checkpoint 3 contra o Postgres real (não a fixture em memória) — perfil próprio visível, nenhum dado operacional; ver `docs/clientes-checkpoint-3.md` §K para o método e o limite exato do teste
+- [ ] super admin validado (login real acessa Equipe/Configurações) — login e Clientes validados no Checkpoint 3; Equipe/Configurações não reexercitadas nesta sessão
 - [ ] `.env.local` fora do git e fora do sync do OneDrive; `.env.example` sem valor real
 
-Não se avança para a Fase 1 com algum item acima pendente.
+O usuário aprovou o início controlado de Clientes em checkpoints. O teste de RLS real do Checkpoint 3 usa o Postgres de produção configurado (não a fixture em memória), mas simula a claim JWT em vez de um login GoTrue completo — ver `docs/clientes-checkpoint-3.md` para o escopo exato dessa verificação.
 
 ## Fase 1 — Operação
 Clientes (Ficha Mestre completa: visão geral, projetos, infraestrutura, domínios, e-mails, financeiro, contratos, chamados, documentos, timeline, acessos), Projetos, Timeline automática, Domínios, Infraestrutura, Suporte.
+
+**Clientes — concluído (Checkpoints 1–3), demais módulos da Fase 1 pendentes.**
+Sessão/autorização, migrations, repository/service, validação, listagem, cadastro,
+Ficha Mestre, contatos, timeline, edição/concorrência, navegação, integração com o
+Dashboard e QA (segurança, responsividade, build) entregues e testados (152 testes).
+Projetos, Suporte, Domínios e Infraestrutura continuam como abas placeholder
+honestas na Ficha Mestre — **a Fase 1 como um todo não está concluída.**
+Ver [Checkpoint 1](clientes-checkpoint-1.md), [Checkpoint 2](clientes-checkpoint-2.md)
+e [Checkpoint 3](clientes-checkpoint-3.md) para o histórico completo.
+
+Aprovado pelo usuário para fechamento (commit/push/deploy) após o Checkpoint 3.
 
 ## Fase 2 — Comercial / Gestão
 CRM (lead → fechado/perdido), Propostas (com conversão proposta aprovada → cliente/projeto), Contratos, Financeiro (contas a pagar/receber, MRR, recorrência), motor de Alertas (vencimento de domínio/contrato, inadimplência, chamado parado).

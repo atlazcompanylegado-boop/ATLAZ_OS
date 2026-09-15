@@ -4,7 +4,18 @@ Sistema operacional interno da **Atlaz Company**. Ver `docs/` para arquitetura, 
 
 ## Stack
 
-Next.js 15 (App Router) + TypeScript, Tailwind CSS, Radix UI, Drizzle ORM, Supabase (Postgres + Auth), Zod, Vitest. Ver justificativa em [`docs/arquitetura.md`](docs/arquitetura.md).
+Next.js 16 (App Router) + React 19, TypeScript, Tailwind CSS, Radix UI, Drizzle ORM, Supabase (Postgres + Auth), Zod, Vitest. Ver justificativa em [`docs/arquitetura.md`](docs/arquitetura.md).
+
+Clientes / Ficha Mestre está **concluído** (Checkpoints 1–3): sessão/autorização,
+migrations, repository/service, validação, listagem, cadastro, ficha, contatos,
+timeline, edição/concorrência, navegação, Dashboard e QA (segurança, responsividade,
+build) entregues e testados. Ver os relatórios de
+[Checkpoint 1](docs/clientes-checkpoint-1.md), [Checkpoint 2](docs/clientes-checkpoint-2.md),
+[Checkpoint 3](docs/clientes-checkpoint-3.md) e a
+[reconciliação do schema](docs/clientes-reconciliacao.md). Os demais módulos da
+Fase 1 (Projetos, Suporte, Domínios, Infraestrutura) ainda não foram implementados —
+ver [`docs/roadmap.md`](docs/roadmap.md). Os testes isolados de fundação rodam com
+`npm run test:foundation`, sem credenciais nem banco remoto.
 
 ## Setup local
 
@@ -33,6 +44,7 @@ O `SUPER_ADMIN_EMAIL` precisa já existir como usuário no Supabase Auth (crie v
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run test` | Vitest |
+| `npm run test:foundation` | testes de sessão/fundação de Clientes, isolados (Postgres em memória) |
 | `npm run db:generate` | gera SQL de migration a partir do schema Drizzle |
 | `npm run db:migrate` | aplica migrations pendentes |
 | `npm run db:seed` | seed idempotente (organização + bootstrap do super admin) |

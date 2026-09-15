@@ -22,7 +22,15 @@ function initials(nameOrEmail: string) {
   return base.slice(0, 2).toUpperCase();
 }
 
-export function Topbar({ userLabel, onOpenMobileNav }: { userLabel: string; onOpenMobileNav: () => void }) {
+export function Topbar({
+  userLabel,
+  onOpenMobileNav,
+  permissions,
+}: {
+  userLabel: string;
+  onOpenMobileNav: () => void;
+  permissions?: readonly string[];
+}) {
   const pathname = usePathname();
   const current = FLAT_NAVIGATION.find((item) => pathname.startsWith(item.href));
 
@@ -40,7 +48,7 @@ export function Topbar({ userLabel, onOpenMobileNav }: { userLabel: string; onOp
       </div>
 
       <div className="flex items-center gap-3">
-        <GlobalSearch />
+        <GlobalSearch permissions={permissions} />
 
         <Tooltip>
           <TooltipTrigger asChild>

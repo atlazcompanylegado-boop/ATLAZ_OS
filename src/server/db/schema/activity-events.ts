@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, jsonb, timestamp, foreignKey, index } from "drizzle-orm/pg-core";
 import { orgs } from "./orgs";
 import { users } from "./users";
 
@@ -9,15 +9,18 @@ import { users } from "./users";
  */
 export const activityEvents = pgTable("activity_events", {
   id: uuid("id").primaryKey().defaultRandom(),
-  orgId: uuid("org_id")
-    .notNull()
-    .references(() => orgs.id, { onDelete: "cascade" }),
+  orgId: uuid("org_id").notNull(),
   entityType: text("entity_type").notNull(),
   entityId: uuid("entity_id").notNull(),
   kind: text("kind").notNull(),
   summary: text("summary").notNull(),
   payload: jsonb("payload").notNull().default({}),
-  actorUserId: uuid("actor_user_id").references(() => users.id),
-  source: text("source").notNull(),
+  actorUserId: uuid("actor_user_id"),
+  source: text("source").notNull().default("app"),
   occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  foreignKey({ name: "activity_events_org_id_fkey", columns: [table.orgId], foreignColumns: [orgs.id] }).onDelete("cascade"),
+  foreignKey({ name: "activity_events_actor_user_id_fkey", columns: [table.actorUserId], foreignColumns: [users.id] }).onDelete("set null"),
+  index("activity_entity_idx").on(table.entityType, table.entityId, table.occurredAt.desc().nullsFirst()),
+  index("activity_org_idx").on(table.orgId, table.occurredAt.desc().nullsFirst()),
+]).enableRLS();

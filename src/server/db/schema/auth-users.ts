@@ -1,9 +1,8 @@
 import { pgSchema, uuid } from "drizzle-orm/pg-core";
 
 /**
- * Referência mínima à tabela auth.users, gerenciada pelo Supabase Auth (não pelo
- * Drizzle). Existe só para permitir FK a partir de `profiles`/`memberships` —
- * nunca é alvo de migration gerada por este projeto.
+ * Referência externa, não exportada em schema/index.ts e não gerenciada por migrations.
+ * A fundação herdada não possui FK de public.users para auth.users.
  */
 export const authUsers = pgSchema("auth").table("users", {
   id: uuid("id").primaryKey(),

@@ -16,6 +16,7 @@ import {
   Settings,
   type LucideIcon,
 } from "lucide-react";
+import { can, type PermissionKey } from "@/config/permissions";
 
 export interface NavItem {
   label: string;
@@ -24,6 +25,8 @@ export interface NavItem {
   /** "available": rota real e funcional na Fase 0. "planned": placeholder honesto (ver docs/roadmap.md). */
   status: "available" | "planned";
   phase?: string;
+  /** Some itens "available" exigem uma permissão para até aparecer (ex.: Clientes → `client:read`). Ausente = sempre visível (comportamento herdado, ex.: Equipe). */
+  permission?: PermissionKey;
 }
 
 export interface NavGroup {
@@ -43,7 +46,7 @@ export const NAVIGATION: NavGroup[] = [
   {
     label: "Operação",
     items: [
-      { label: "Clientes", href: "/clientes", icon: Users, status: "planned", phase: "Fase 1" },
+      { label: "Clientes", href: "/clientes", icon: Users, status: "available", permission: "client:read" },
       { label: "Projetos", href: "/projetos", icon: FolderKanban, status: "planned", phase: "Fase 1" },
       { label: "Suporte", href: "/suporte", icon: LifeBuoy, status: "planned", phase: "Fase 1" },
     ],
@@ -88,3 +91,18 @@ export const NAVIGATION: NavGroup[] = [
 ];
 
 export const FLAT_NAVIGATION: NavItem[] = NAVIGATION.flatMap((group) => group.items);
+
+function isNavItemVisible(item: NavItem, permissions: readonly string[] | undefined): boolean {
+  return !item.permission || can(permissions, item.permission);
+}
+
+/** Filtra grupos/itens que exigem uma permissão o usuário não possui — nunca lista o que ele não pode abrir. */
+export function getVisibleNavigation(permissions: readonly string[] | undefined): NavGroup[] {
+  return NAVIGATION.map((group) => ({ ...group, items: group.items.filter((item) => isNavItemVisible(item, permissions)) })).filter(
+    (group) => group.items.length > 0,
+  );
+}
+
+export function getVisibleFlatNavigation(permissions: readonly string[] | undefined): NavItem[] {
+  return FLAT_NAVIGATION.filter((item) => isNavItemVisible(item, permissions));
+}

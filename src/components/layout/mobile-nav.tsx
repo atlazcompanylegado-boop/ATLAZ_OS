@@ -5,7 +5,15 @@ import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 
 /** Navegação em drawer para telas abaixo de `md` (768px) — reaproveita SidebarNav. */
-export function MobileNav({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function MobileNav({
+  open,
+  onOpenChange,
+  permissions,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  permissions?: readonly string[];
+}) {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent side="left" className="max-w-[280px]">
@@ -13,7 +21,7 @@ export function MobileNav({ open, onOpenChange }: { open: boolean; onOpenChange:
           <AtlasMark size={22} className="shrink-0 text-ink-1" />
           <span className="font-display text-[15px] tracking-wide text-ink-1">ATLΛZ OS</span>
         </div>
-        <SidebarNav labelMode="visible" onNavigate={() => onOpenChange(false)} />
+        <SidebarNav labelMode="visible" onNavigate={() => onOpenChange(false)} permissions={permissions} />
       </DrawerContent>
     </Drawer>
   );

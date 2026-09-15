@@ -10,4 +10,4 @@ export const permissions = pgTable("permissions", {
   resource: text("resource").notNull(),
   action: text("action").notNull(),
   description: text("description").notNull(),
-});
+}).enableRLS();

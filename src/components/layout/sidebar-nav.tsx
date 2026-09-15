@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { NAVIGATION } from "@/config/navigation";
+import { getVisibleNavigation } from "@/config/navigation";
 import { Badge } from "@/components/ui/badge";
 
 export type SidebarLabelMode = "responsive" | "hidden" | "visible";
@@ -24,11 +24,14 @@ export type SidebarLabelMode = "responsive" | "hidden" | "visible";
 export function SidebarNav({
   labelMode = "responsive",
   onNavigate,
+  permissions,
 }: {
   labelMode?: SidebarLabelMode;
   onNavigate?: () => void;
+  permissions?: readonly string[];
 }) {
   const pathname = usePathname();
+  const navigation = getVisibleNavigation(permissions);
 
   const labelClass =
     labelMode === "hidden" ? "hidden" : labelMode === "visible" ? "inline" : "hidden lg:inline";
@@ -39,7 +42,7 @@ export function SidebarNav({
 
   return (
     <nav className="flex-1 overflow-y-auto px-3 py-4">
-      {NAVIGATION.map((group) => (
+      {navigation.map((group) => (
         <div key={group.label} className="mb-5">
           <p className={cn("mb-2 px-2.5 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3/80", blockLabelClass)}>
             {group.label}

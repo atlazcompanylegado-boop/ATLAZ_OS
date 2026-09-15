@@ -1,6 +1,9 @@
+import Link from "next/link";
 import { Users, Briefcase, Target, Wallet, AlertTriangle } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth/session";
 import { getTeamSize } from "@/server/services/team-service";
+import { getClientKpis } from "@/server/services/client-service";
+import { can } from "@/config/permissions";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Alert } from "@/components/ui/alert";
@@ -25,6 +28,18 @@ export default async function DashboardPage() {
     );
   }
 
+  const canReadClients = can(session.membership.permissions, "client:read");
+  let clientActiveCount: number | null = null;
+  if (canReadClients) {
+    try {
+      // Se `client:read` estiver presente mas o scope não for `org` (ex.: "assigned"),
+      // o service nega mesmo assim — tratamos como "sem acesso", nunca como zero.
+      clientActiveCount = (await getClientKpis()).active;
+    } catch {
+      clientActiveCount = null;
+    }
+  }
+
   const teamSize = await getTeamSize(session.membership.org.id);
 
   return (
@@ -42,12 +57,22 @@ export default async function DashboardPage() {
       <section>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <KpiCard label="Membros da equipe" value={teamSize} icon={Users} />
-          <KpiCard
-            label="Clientes ativos"
-            value="—"
-            icon={Briefcase}
-            trend={{ direction: "flat", label: "Aguarda módulo de Clientes (Fase 1)" }}
-          />
+          {clientActiveCount !== null ? (
+            <Link
+              href="/clientes"
+              className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
+              aria-label={`Clientes ativos: ${clientActiveCount}. Ver Clientes.`}
+            >
+              <KpiCard label="Clientes ativos" value={clientActiveCount} icon={Briefcase} />
+            </Link>
+          ) : (
+            <KpiCard
+              label="Clientes ativos"
+              value="—"
+              icon={Briefcase}
+              trend={{ direction: "flat", label: "Sem permissão para ver Clientes" }}
+            />
+          )}
           <KpiCard
             label="Leads"
             value="—"

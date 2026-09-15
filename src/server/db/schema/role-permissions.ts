@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, primaryKey, foreignKey } from "drizzle-orm/pg-core";
 import { roles } from "./roles";
 import { permissions } from "./permissions";
 
@@ -6,12 +6,12 @@ import { permissions } from "./permissions";
 export const rolePermissions = pgTable(
   "role_permissions",
   {
-    roleId: uuid("role_id")
-      .notNull()
-      .references(() => roles.id, { onDelete: "cascade" }),
-    permissionKey: text("permission_key")
-      .notNull()
-      .references(() => permissions.key, { onDelete: "cascade" }),
+    roleId: uuid("role_id").notNull(),
+    permissionKey: text("permission_key").notNull(),
   },
-  (table) => [primaryKey({ columns: [table.roleId, table.permissionKey] })],
-);
+  (table) => [
+    primaryKey({ name: "role_permissions_pkey", columns: [table.roleId, table.permissionKey] }),
+    foreignKey({ name: "role_permissions_role_id_fkey", columns: [table.roleId], foreignColumns: [roles.id] }).onDelete("cascade"),
+    foreignKey({ name: "role_permissions_permission_key_fkey", columns: [table.permissionKey], foreignColumns: [permissions.key] }).onDelete("cascade"),
+  ],
+).enableRLS();

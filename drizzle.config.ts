@@ -11,7 +11,7 @@ export default defineConfig({
   },
   // "public" + "audit" são gerenciados por este projeto. "auth" NUNCA — auth.users
   // pertence ao Supabase Auth e não deve ser criado/alterado por uma migration daqui
-  // (ver schema/auth-users.ts, referenciada só para FK).
+  // (auth-users.ts é referência externa e não é exportada pelo schema gerenciado).
   schemaFilter: ["public", "audit"],
   strict: true,
   verbose: true,

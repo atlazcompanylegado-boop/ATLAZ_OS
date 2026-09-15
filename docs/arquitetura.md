@@ -4,7 +4,7 @@
 
 | Camada | Escolha | Por quê |
 |---|---|---|
-| Frontend + Backend | **Next.js 14 (App Router), TypeScript** | Full-stack em um único deploy: UI, Server Actions e Route Handlers no mesmo projeto. Elimina a necessidade de manter/versionar uma API separada nesta fase. Maduro, bem documentado, excelente suporte no Windows. |
+| Frontend + Backend | **Next.js 16 (App Router), TypeScript** | Full-stack em um único deploy: UI, Server Actions e Route Handlers no mesmo projeto. Elimina a necessidade de manter/versionar uma API separada nesta fase. Maduro, bem documentado, excelente suporte no Windows. |
 | Estilo | **Tailwind CSS v3 + tokens próprios (CSS variables)** | Utilitário, previsível, zero CSS-in-JS em runtime. Os tokens da identidade Atlaz (cor, tipografia, espaçamento) vivem em `src/design-system/tokens.ts` e em variáveis CSS — Tailwind só consome esses valores, nunca define a identidade sozinho. |
 | Componentes acessíveis | **Radix UI (primitives) + CVA (class-variance-authority)** | Dialog, Dropdown, Tabs, Tooltip, Avatar, Popover prontos para teclado/ARIA. CVA controla variantes (size, tone) sem duplicar CSS entre telas. |
 | Banco | **PostgreSQL via Supabase** | Já exigido pelo escopo. Dá Auth, Storage e Postgres gerenciado num único provedor, com RLS nativo. |

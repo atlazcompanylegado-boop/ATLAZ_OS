@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, boolean, timestamp, unique } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, boolean, timestamp, unique, foreignKey } from "drizzle-orm/pg-core";
 import { orgs } from "./orgs";
 
 /**
@@ -10,9 +10,7 @@ export const roles = pgTable(
   "roles",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    orgId: uuid("org_id")
-      .notNull()
-      .references(() => orgs.id, { onDelete: "cascade" }),
+    orgId: uuid("org_id").notNull(),
     key: text("key").notNull(),
     name: text("name").notNull(),
     description: text("description"),
@@ -20,5 +18,8 @@ export const roles = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [unique("roles_org_id_key_key").on(table.orgId, table.key)],
-);
+  (table) => [
+    unique("roles_org_id_key_key").on(table.orgId, table.key),
+    foreignKey({ name: "roles_org_id_fkey", columns: [table.orgId], foreignColumns: [orgs.id] }).onDelete("cascade"),
+  ],
+).enableRLS();
