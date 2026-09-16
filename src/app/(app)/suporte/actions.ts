@@ -17,16 +17,20 @@ export type TicketStatusActionResult = { ok: true } | { ok: false; error: string
 
 function extractTicketInput(formData: FormData) {
   const dueAtRaw = formData.get("dueAt");
-  return {
+  const input: Record<string, unknown> = {
     title: formData.get("title"),
     description: formData.get("description"),
-    projectId: formData.get("projectId"),
     priority: formData.get("priority"),
     assignedUserId: formData.get("assignedUserId"),
     // <input type="datetime-local"> não carrega timezone — interpretado como horário de
     // Brasília antes de virar ISO-8601 (ver src/lib/support/format.ts).
     dueAt: typeof dueAtRaw === "string" && dueAtRaw ? fromDateTimeLocalValue(dueAtRaw) : dueAtRaw,
   };
+  // Allowlist por presença: o formulário só envia projectId a quem pode gerenciar Projeto.
+  // Campo ausente preserva o vínculo na edição (nunca vira NULL); campo presente é uma alteração
+  // explícita, que o service só aceita com project:read (e rejeita, nunca ignora, sem ela).
+  if (formData.has("projectId")) input.projectId = formData.get("projectId");
+  return input;
 }
 
 export async function createTicketAction(_prevState: TicketFormState, formData: FormData): Promise<TicketFormState> {

@@ -7,7 +7,7 @@ import { getDb } from "@/server/db/client";
 import type { DbClient } from "@/server/db/types";
 import { ticketCreateSchema, ticketUpdateSchema, ticketFiltersSchema, ticketIdSchema, ticketVersionSchema,
   ticketPaginationSchema, ticketStatusActionSchema, ticketReopenSchema, ticketClientSelectorSchema, ticketProjectSelectorSchema,
-  ticketCommentCreateSchema, TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS, isFinalTicketStatus, type TicketStatus } from "@/lib/validation/ticket";
+  ticketCommentCreateSchema, TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS, isFinalTicketStatus, type TicketFilters, type TicketStatus } from "@/lib/validation/ticket";
 import { TICKET_EVENT_KINDS } from "@/lib/support/activity";
 import * as repo from "@/server/repositories/ticket-repository";
 import * as timelineRepo from "@/server/repositories/ticket-timeline-repository";
@@ -20,6 +20,19 @@ async function requireAccess(access: "read" | "write") {
   const auth = authorizeTicketSession(session, access);
   if (!auth.ok) throw new ServiceError("forbidden", "Você não tem acesso a Suporte.");
   return { ...auth.context, canReadProjects: can(session?.membership?.permissions, "project:read") };
+}
+type Actor = Awaited<ReturnType<typeof requireAccess>>;
+/**
+ * Ver, listar, escolher, trocar, remover, filtrar ou buscar Projeto exige project:read, além do
+ * acesso ao chamado. Sempre checado antes de qualquer validação de entrada ou consulta, para
+ * que a resposta nunca revele se um Projeto existe (docs/suporte-hotfix-project-masking.md).
+ */
+function requireProjectAccess(actor: Actor) {
+  if (!actor.canReadProjects) throw new ServiceError("forbidden", "Você não tem acesso a Projetos.");
+}
+/** Sem project:read, um filtro de Projeto vindo da URL é ignorado — nunca vira oráculo de existência. */
+function scopeFilters(filters: TicketFilters, actor: Actor): TicketFilters {
+  return actor.canReadProjects ? filters : { ...filters, projectId: null };
 }
 function parse<S extends z.ZodTypeAny>(schema: S, raw: unknown): z.output<S> {
   const result = schema.safeParse(raw);
@@ -80,21 +93,21 @@ function maskProjectVisibility<T extends { projectId: string | null; projectName
 }
 
 export async function listTickets(raw: unknown = {}) {
-  const actor = await requireAccess("read"), filters = parse(ticketFiltersSchema, raw);
+  const actor = await requireAccess("read"), filters = scopeFilters(parse(ticketFiltersSchema, raw), actor);
   return safe(async () => {
     if (filters.clientId) await ensureClient(getDb(), actor.orgId, filters.clientId);
-    const list = await repo.listTickets(getDb(), actor.orgId, filters);
+    const list = await repo.listTickets(getDb(), actor.orgId, filters, { canReadProjects: actor.canReadProjects });
     return { ...list, rows: list.rows.map(r => maskProjectVisibility(r, actor.canReadProjects)) };
   });
 }
 /** Listagem + KPIs + responsáveis disponíveis na mesma renderização (mesmo motivo de `getProjectsPageData`). */
 export async function getTicketsPageData(raw: unknown = {}) {
-  const actor = await requireAccess("read"), filters = parse(ticketFiltersSchema, raw);
+  const actor = await requireAccess("read"), filters = scopeFilters(parse(ticketFiltersSchema, raw), actor);
   return safe(async () => {
     if (filters.clientId) await ensureClient(getDb(), actor.orgId, filters.clientId);
     const db = getDb();
     const [list, kpis, assignees] = await Promise.all([
-      repo.listTickets(db, actor.orgId, filters),
+      repo.listTickets(db, actor.orgId, filters, { canReadProjects: actor.canReadProjects }),
       repo.getTicketCounts(db, actor.orgId, filters.clientId ?? undefined),
       repo.listAvailableAssignees(db, actor.orgId),
     ]);
@@ -140,7 +153,9 @@ export async function getTicketClient(rawId: unknown) {
 }
 /** Seletor de Projeto sempre restrito ao Cliente escolhido — nunca carrega os projetos de outros clientes. */
 export async function listTicketProjects(raw: unknown) {
-  const actor = await requireAccess("read"), input = parse(ticketProjectSelectorSchema, raw);
+  const actor = await requireAccess("read");
+  requireProjectAccess(actor);
+  const input = parse(ticketProjectSelectorSchema, raw);
   return safe(async () => {
     await ensureClient(getDb(), actor.orgId, input.clientId);
     return repo.listTicketProjects(getDb(), actor.orgId, input.clientId, input.q, input.page);
@@ -148,6 +163,7 @@ export async function listTicketProjects(raw: unknown) {
 }
 export async function getTicketProject(rawClientId: unknown, rawProjectId: unknown) {
   const actor = await requireAccess("read");
+  requireProjectAccess(actor);
   return safe(async () => {
     const client = await ensureClient(getDb(), actor.orgId, rawClientId);
     return ensureProject(getDb(), actor.orgId, client.id, validId(rawProjectId));
@@ -166,6 +182,8 @@ export async function getTicketCounts(rawClientId?: unknown) {
 }
 export async function createTicket(raw: unknown) {
   const actor = await requireAccess("write"), data = parse(ticketCreateSchema, raw);
+  // Vincular Projeto na criação exige project:read; checado antes de consultar o Projeto.
+  if (data.projectId !== null) requireProjectAccess(actor);
   return safe(() => getDb().transaction(async tx => {
     await ensureClient(tx, actor.orgId, data.clientId);
     if (data.projectId) await ensureProject(tx, actor.orgId, data.clientId, data.projectId);
@@ -180,7 +198,7 @@ export async function createTicket(raw: unknown) {
 }
 type Mutation = { mode: "edit"; data: z.output<typeof ticketUpdateSchema> }
   | { mode: "status"; status: TicketStatus } | { mode: "reopen" };
-async function mutate(actor: Awaited<ReturnType<typeof requireAccess>>, id: string, version: number, change: Mutation) {
+async function mutate(actor: Actor, id: string, version: number, change: Mutation) {
   return safe(() => getDb().transaction(async tx => {
     const before = await repo.lockTicket(tx, actor.orgId, id);
     if (!before) throw new ServiceError("not_found", "Chamado não encontrado.");
@@ -193,10 +211,15 @@ async function mutate(actor: Awaited<ReturnType<typeof requireAccess>>, id: stri
       if (!final(before.status)) throw new ServiceError("invalid_transition", "Somente chamados resolvidos ou cancelados podem ser reabertos.");
       data = { ...data, status: "in_progress", resolvedAt: null };
     } else {
-      const nextStatus = change.mode === "status" ? change.status : change.data.status;
+      const nextStatus = change.mode === "status" ? change.status : (change.data.status ?? before.status);
       if (nextStatus !== before.status && final(before.status)) throw new ServiceError("invalid_transition", "Use a operação Reabrir chamado.");
       if (change.mode === "edit" && nextStatus !== before.status && final(nextStatus)) throw new ServiceError("invalid_transition", "Use a operação explícita de resolução ou cancelamento.");
-      if (change.mode === "edit") data = { ...data, ...change.data };
+      if (change.mode === "edit") {
+        // Allowlist explícita: projectId ausente preserva o vínculo atual (nunca vira NULL).
+        const { title, description, priority, assignedUserId, dueAt, projectId } = change.data;
+        data = { ...data, title, description, priority, assignedUserId, dueAt };
+        if (projectId !== undefined) data.projectId = projectId;
+      }
       data.status = nextStatus;
       if (nextStatus === "resolved" && before.status !== "resolved") data.resolvedAt = new Date();
       else if (nextStatus !== "resolved") data.resolvedAt = null; // cancelled nunca finge resolução; não-finais não têm resolvedAt
@@ -232,7 +255,10 @@ async function mutate(actor: Awaited<ReturnType<typeof requireAccess>>, id: stri
 }
 export async function updateTicket(rawId: unknown, raw: unknown, rawVersion: unknown) {
   const actor = await requireAccess("write"), id = validId(rawId), version = parse(ticketVersionSchema, rawVersion);
-  return mutate(actor, id, version, { mode: "edit", data: parse(ticketUpdateSchema, raw) });
+  const data = parse(ticketUpdateSchema, raw);
+  // Vincular, trocar ou remover Projeto exige project:read; editar os demais campos, não.
+  if (data.projectId !== undefined) requireProjectAccess(actor);
+  return mutate(actor, id, version, { mode: "edit", data });
 }
 export async function changeTicketStatus(raw: unknown) {
   const actor = await requireAccess("write"), input = parse(ticketStatusActionSchema, raw);

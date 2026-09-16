@@ -14,7 +14,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file=.env.local src/server/db/migrate.ts",
     "db:seed": "tsx --env-file=.env.local src/server/db/seed.ts",
-    "test:foundation": "vitest run tests/unit/session.test.ts tests/integration/client-foundation.test.ts tests/integration/schema-reconciliation.test.ts tests/unit/project-validation.test.ts tests/integration/project-foundation.test.ts tests/integration/project-service.test.ts tests/integration/project-migration.test.ts tests/unit/ticket-validation.test.ts tests/integration/ticket-foundation.test.ts tests/integration/ticket-service.test.ts tests/integration/ticket-migration.test.ts"
+    "test:foundation": "vitest run tests/unit/session.test.ts tests/integration/client-foundation.test.ts tests/integration/schema-reconciliation.test.ts tests/unit/project-validation.test.ts tests/integration/project-foundation.test.ts tests/integration/project-service.test.ts tests/integration/project-migration.test.ts tests/unit/ticket-validation.test.ts tests/integration/ticket-foundation.test.ts tests/integration/ticket-service.test.ts tests/integration/ticket-migration.test.ts tests/integration/ticket-project-access.test.ts"
   },
   "dependencies": {
     "next": "^16.3.4",

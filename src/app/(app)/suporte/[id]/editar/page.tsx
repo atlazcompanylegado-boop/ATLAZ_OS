@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth/session";
 import { authorizeTicketSession } from "@/lib/auth/ticket-access";
+import { can } from "@/config/permissions";
 import { getTicketDetail, listAvailableTicketAssignees } from "@/server/services/ticket-service";
 import { ServiceError } from "@/server/services/service-error";
 import { formatTicketNumber } from "@/lib/support/format";
@@ -37,7 +38,12 @@ export default async function EditarChamadoPage({ params }: { params: Promise<{ 
       <Breadcrumb items={[{ label: "Suporte", href: "/suporte" }, { label, href: `/suporte/${ticket.id}` }, { label: "Editar" }]} />
       <PageHeader title={`Editar ${label}`} description="Atualize os dados deste chamado." />
       <div className="max-w-3xl">
-        <TicketForm mode="edit" assignees={assignees} ticket={{ ...ticket, dueAt: ticket.dueAt?.toISOString() ?? null }} />
+        <TicketForm
+          mode="edit"
+          assignees={assignees}
+          ticket={{ ...ticket, dueAt: ticket.dueAt?.toISOString() ?? null }}
+          canManageProject={can(session?.membership?.permissions, "project:read")}
+        />
       </div>
     </div>
   );

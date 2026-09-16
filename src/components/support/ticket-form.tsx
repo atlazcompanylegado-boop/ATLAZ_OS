@@ -42,10 +42,12 @@ export interface TicketFormProps {
   assignees: AssigneeOption[];
   ticket?: TicketFormTicket;
   preselectedClient?: TicketClientOption | null;
+  /** project:read — sem ele, o campo Projeto não é renderizado nem enviado (o vínculo é preservado no servidor). */
+  canManageProject: boolean;
 }
 
 /** Formulário único de Suporte — reaproveitado por /suporte/novo e /suporte/[id]/editar. Status nunca é editado aqui — só pelas ações explícitas da ficha. */
-export function TicketForm({ mode, assignees, ticket, preselectedClient }: TicketFormProps) {
+export function TicketForm({ mode, assignees, ticket, preselectedClient, canManageProject }: TicketFormProps) {
   const router = useRouter();
   const action = mode === "create" ? createTicketAction : updateTicketAction;
   const [state, formAction, pending] = useActionState<TicketFormState, FormData>(action, undefined);
@@ -54,7 +56,7 @@ export function TicketForm({ mode, assignees, ticket, preselectedClient }: Ticke
 
   const fieldErrors = state?.fieldErrors ?? {};
   const isConflict = state?.code === "conflict";
-  const initialProject: TicketProjectOption | null = ticket?.hasProject && ticket.projectId && ticket.projectName
+  const initialProject: TicketProjectOption | null = canManageProject && ticket?.hasProject && ticket.projectId && ticket.projectName
     ? { id: ticket.projectId, name: ticket.projectName, status: "" }
     : null;
 
@@ -111,13 +113,28 @@ export function TicketForm({ mode, assignees, ticket, preselectedClient }: Ticke
           </div>
 
           <div className="sm:col-span-2">
-            <TicketProjectSelector
-              name="projectId"
-              clientId={clientId}
-              initialProject={initialProject}
-              onSearch={searchTicketProjectsAction}
-            />
-            {fieldErrors.projectId ? <p className="mt-1 text-xs text-danger">{fieldErrors.projectId}</p> : null}
+            {canManageProject ? (
+              <>
+                <TicketProjectSelector
+                  name="projectId"
+                  clientId={clientId}
+                  initialProject={initialProject}
+                  onSearch={searchTicketProjectsAction}
+                />
+                {fieldErrors.projectId ? <p className="mt-1 text-xs text-danger">{fieldErrors.projectId}</p> : null}
+              </>
+            ) : (
+              <div className="space-y-1.5">
+                <Label>Projeto</Label>
+                <div className="flex h-10 items-center rounded-sm border border-border bg-surface-3 px-3 text-sm text-ink-2">
+                  {ticket?.hasProject ? "Projeto vinculado" : "Nenhum projeto vinculado"}
+                </div>
+                <p className="flex items-start gap-1.5 text-xs text-ink-3">
+                  <Info className="mt-0.5 h-3 w-3 shrink-0" strokeWidth={1.5} />
+                  Vincular ou alterar o Projeto exige acesso a Projetos.
+                </p>
+              </div>
+            )}
           </div>
 
           <Field label="Título" htmlFor="title" error={fieldErrors.title} className="sm:col-span-2">

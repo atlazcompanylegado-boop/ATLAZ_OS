@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { TicketForm } from "@/components/support/ticket-form";
 import { getCurrentSession } from "@/lib/auth/session";
 import { authorizeTicketSession } from "@/lib/auth/ticket-access";
+import { can } from "@/config/permissions";
 import { listAvailableTicketAssignees, getTicketClient } from "@/server/services/ticket-service";
 import { ServiceError } from "@/server/services/service-error";
 import type { TicketClientOption } from "@/components/support/client-selector";
@@ -46,7 +47,12 @@ export default async function NovoChamadoPage({
       <Breadcrumb items={[{ label: "Suporte", href: "/suporte" }, { label: "Novo chamado" }]} />
       <PageHeader title="Novo chamado" description="Abra um novo chamado de atendimento vinculado a um cliente da Atlaz Company." />
       <div className="max-w-3xl">
-        <TicketForm mode="create" assignees={assignees} preselectedClient={preselectedClient} />
+        <TicketForm
+          mode="create"
+          assignees={assignees}
+          preselectedClient={preselectedClient}
+          canManageProject={can(session?.membership?.permissions, "project:read")}
+        />
       </div>
     </div>
   );

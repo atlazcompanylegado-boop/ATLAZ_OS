@@ -46,7 +46,15 @@ export const ticketCreateSchema = z.object({
   status: fields.status.default("open"), priority: fields.priority.default("normal"),
 });
 // clientId nunca é reenviável como campo editável (imutável após criação, ver Checkpoint A §9).
-export const ticketUpdateSchema = z.object({ ...fields, clientId: z.never().optional() });
+// status e projectId têm semântica de PATCH: ausente = preservar o valor atual; presente (inclusive
+// vazio → null) = alteração explícita. O formulário de edição não envia status, e só envia projectId
+// a quem pode gerenciar Projeto — ausência nunca pode virar NULL (docs/suporte-hotfix-project-masking.md).
+export const ticketUpdateSchema = z.object({
+  ...fields,
+  status: fields.status.optional(),
+  projectId: fields.projectId.optional(),
+  clientId: z.never().optional(),
+});
 // Aceita qualquer status (não só resolved/cancelled): a ficha oferece ações rápidas de
 // transição entre estados não-finais (iniciar atendimento, enviar para triagem, aguardar
 // cliente, retomar) além de resolver/cancelar — todas passam por este único caminho de

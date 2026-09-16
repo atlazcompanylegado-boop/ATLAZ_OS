@@ -47,7 +47,7 @@ export default async function SuportePage({
     try { selectedClient = await getTicketClient(filters.clientId); } catch { /* filtro inválido é só ignorado */ }
   }
   let selectedProject: TicketProjectOption | null = null;
-  if (filters.clientId && filters.projectId) {
+  if (canReadProjects && filters.clientId && filters.projectId) {
     try { selectedProject = (await getTicketProject(filters.clientId, filters.projectId)) ?? null; } catch { /* idem */ }
   }
 
@@ -89,6 +89,7 @@ export default async function SuportePage({
         selectedProject={selectedProject}
         onSearchClients={searchTicketClientsAction}
         onSearchProjects={searchTicketProjectsAction}
+        canFilterByProject={canReadProjects}
       />
 
       {rows.length === 0 ? (

@@ -29,12 +29,15 @@ export function TicketFilters({
   selectedProject,
   onSearchClients,
   onSearchProjects,
+  canFilterByProject,
 }: {
   assignees: AssigneeOption[];
   selectedClient: TicketClientOption | null;
   selectedProject: TicketProjectOption | null;
   onSearchClients: (q: string, page: number) => Promise<TicketClientSelectorResult>;
   onSearchProjects: (clientId: string, q: string, page: number) => Promise<TicketProjectSelectorResult>;
+  /** project:read — sem ele, o filtro de Projeto não existe (o servidor também ignora `projectId`). */
+  canFilterByProject: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -71,7 +74,7 @@ export function TicketFilters({
       <Input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Buscar por número, título, cliente ou projeto..."
+        placeholder={canFilterByProject ? "Buscar por número, título, cliente ou projeto..." : "Buscar por número, título ou cliente..."}
         leftIcon={<Search className="h-4 w-4" strokeWidth={1.5} />}
         className="sm:max-w-xs"
         aria-label="Buscar chamados"
@@ -93,15 +96,17 @@ export function TicketFilters({
         ) : null}
       </div>
 
-      <div className="sm:w-56">
-        <TicketProjectSelector
-          name="projectFilter"
-          clientId={clientId}
-          initialProject={selectedProject}
-          onSearch={onSearchProjects}
-          onChange={(project) => updateParams({ projectId: project?.id ?? null })}
-        />
-      </div>
+      {canFilterByProject ? (
+        <div className="sm:w-56">
+          <TicketProjectSelector
+            name="projectFilter"
+            clientId={clientId}
+            initialProject={selectedProject}
+            onSearch={onSearchProjects}
+            onChange={(project) => updateParams({ projectId: project?.id ?? null })}
+          />
+        </div>
+      ) : null}
 
       <Select value={searchParams.get("status") ?? ALL} onValueChange={(value) => updateParams({ status: value === ALL ? null : value })}>
         <SelectTrigger className="sm:w-44" aria-label="Filtrar por status">
