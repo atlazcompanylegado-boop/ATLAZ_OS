@@ -12,9 +12,8 @@ timeline, edição/concorrência, navegação, Dashboard e QA (segurança, respo
 build) entregues e testados. Ver os relatórios de
 [Checkpoint 1](docs/clientes-checkpoint-1.md), [Checkpoint 2](docs/clientes-checkpoint-2.md),
 [Checkpoint 3](docs/clientes-checkpoint-3.md) e a
-[reconciliação do schema](docs/clientes-reconciliacao.md). Projetos também está
-**concluído e publicado** (ver abaixo). Suporte está tecnicamente pronto,
-aguardando decisão de publicação (ver abaixo). Domínios e Infraestrutura —
+[reconciliação do schema](docs/clientes-reconciliacao.md). Projetos e Suporte
+também estão **concluídos e publicados** (ver abaixo). Domínios e Infraestrutura —
 os módulos restantes da Fase 1 — ainda não foram implementados, ver
 [`docs/roadmap.md`](docs/roadmap.md). Os testes isolados de fundação rodam com
 `npm run test:foundation`, sem credenciais nem banco remoto.
@@ -40,9 +39,11 @@ eventos de Suporte na Timeline consolidada do Cliente
 ([Checkpoint D](docs/suporte-checkpoint-d.md)) concluídos: listagem, KPIs,
 filtros/busca (incluindo por número do chamado), formulário, ficha,
 comentários, ações de status explícitas, timeline, navegação ativa. Lint,
-typecheck, testes (500+2), foundation (343) e build verdes. **Implementação
-concluída localmente, aguardando publicação** — QA visual autenticado
-permanece pendente (mesma ressalva de Clientes/Projetos).
+typecheck, testes (500+2), foundation (343) e build verdes. **Publicado em
+produção em 16/09/2026** ([Checkpoint D.2](docs/suporte-checkpoint-d2.md):
+commit `6cfc715`, deploy Render `dep-dal0ok0ae00c73f56nbg`, smoke test
+aprovado), com o QA visual autenticado aceito como pendência conhecida (mesma
+ressalva de Clientes/Projetos).
 
 ## Setup local
 

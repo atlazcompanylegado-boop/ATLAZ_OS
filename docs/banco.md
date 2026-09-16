@@ -22,8 +22,9 @@
 > [Checkpoint A](suporte-checkpoint-a.md)/[B](suporte-checkpoint-b.md). UI,
 > navegação e QA final concluídos nos Checkpoints
 > [C2](suporte-checkpoint-c2.md)/[D](suporte-checkpoint-d.md) — nenhuma
-> migration nova além da `0005` em nenhuma dessas etapas. Suporte está
-> tecnicamente pronto, aguardando publicação.
+> migration nova além da `0005` em nenhuma dessas etapas. **Publicado em
+> produção em 16/09/2026** (commit `6cfc715`, deploy Render
+> `dep-dal0ok0ae00c73f56nbg` — ver [Checkpoint D.2](suporte-checkpoint-d2.md)).
 
 ## 1. Baseline herdado do projeto anterior
 

@@ -72,16 +72,19 @@ concluído: regressão completa de Clientes/Projetos, segurança (cross-org,
 project masking, BYPASSRLS, N+1), acessibilidade/responsividade estruturais,
 1 bug visual isolado corrigido (formatação de data/hora inconsistente na aba
 Suporte da Ficha do Cliente). Lint/typecheck/testes (500+2)/foundation
-(343)/build verdes. **Suporte está tecnicamente pronto — implementação
-concluída localmente, aguardando publicação** (QA visual autenticado
-permanece pendente por falta de sessão disponível nesta sessão, mesma
-ressalva já registrada para Clientes/Projetos).
+(343)/build verdes. **Publicado em produção em 16/09/2026**
+([Checkpoint D.2](suporte-checkpoint-d2.md): commit `6cfc715`, deploy Render
+`dep-dal0ok0ae00c73f56nbg`, smoke test não destrutivo aprovado — 6 rotas
+verificadas em produção, zero erro de aplicação), com o QA visual autenticado
+aceito como pendência conhecida (ambiente sem sessão disponível para
+testá-lo, mesma ressalva de Clientes/Projetos). **Suporte está concluído e
+publicado.**
 
-Ordem de trabalho: Suporte (aguardando decisão de publicação) → Domínios →
-Infraestrutura → integração final/timeline → Dashboard operacional → QA da
-Fase 1. Parada obrigatória após cada etapa. Clientes e Projetos permanecem
-concluídos, sem regressão. **A Fase 1 como um todo continua em aberto** —
-Domínios e Infraestrutura ainda não foram implementados.
+Ordem de trabalho: Domínios → Infraestrutura → integração final/timeline →
+Dashboard operacional → QA da Fase 1. Parada obrigatória após cada etapa.
+Clientes, Projetos e Suporte permanecem concluídos e publicados, sem
+regressão. **A Fase 1 como um todo continua em aberto** — Domínios e
+Infraestrutura ainda não foram implementados.
 
 ## Fase 2 — Comercial / Gestão
 CRM (lead → fechado/perdido), Propostas (com conversão proposta aprovada → cliente/projeto), Contratos, Financeiro (contas a pagar/receber, MRR, recorrência), motor de Alertas (vencimento de domínio/contrato, inadimplência, chamado parado).
