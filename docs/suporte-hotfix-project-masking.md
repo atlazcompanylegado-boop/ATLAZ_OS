@@ -2,7 +2,11 @@
 
 Data: 16/09/2026. Escopo: correção cirúrgica no módulo Suporte já publicado
 (commit `6cfc715`). **Sem migration, sem mudança de schema, RLS ou grants, sem
-feature nova.** Não commitado, não publicado — aguardando revisão.
+feature nova.**
+
+**Publicado em produção em 16/09/2026** — commit `dcd70cb434bbdc08c9a6c52dab945a26f7cdecab`
+(`dcd70cb`), deploy Render `dep-dal9mbm1egvs73f0jd70` (`live`, ~80s), smoke
+test não destrutivo aprovado (§10).
 
 Origem: risco R1 da [auditoria de Domínios](dominios-checkpoint-a.md) (§47).
 Os checkpoints históricos de Suporte não foram reescritos.
@@ -168,14 +172,19 @@ Cross-org inalterado: projeto de outra org ou de outro cliente continua
 | `tests/unit/ticket-project-access-ui.test.tsx` (novo) | 6 | formulário e filtros sem/com `project:read`; conjunto real de campos do `<form>` |
 | `tests/helpers/ticket-form-fields.ts` (novo) | — | lista de campos compartilhada entre o teste de componente e o de integração |
 
-O cenário principal (Projeto A vinculado; usuário com `ticket:read`,
-`ticket:write` e `client:read`, sem `project:read`) passa pela
-`updateTicketAction` real, com o mesmo `FormData` que o formulário renderizado
-envia. Editando **só a prioridade**:
-- a prioridade muda;
+O cenário principal (chamado com `status = in_progress`, Projeto A vinculado;
+usuário com `ticket:read`, `ticket:write` e `client:read`, sem `project:read`)
+passa pela `updateTicketAction` real, com o mesmo `FormData` que o formulário
+renderizado envia — sem `status`, sem `projectId`. Editando **só a
+prioridade**:
+- a prioridade muda (`normal` → `high`);
+- `status` continua `in_progress` (não regride para `open` nem qualquer outro
+  valor por ausência no payload);
 - `project_id` continua sendo o Projeto A;
-- o status é preservado;
+- `version` avança de 1 para 2;
 - os únicos eventos são `ticket.created` e `ticket.priority_changed`;
+- `audit.log` tem exatamente `ticket.create` + `ticket.update`, com
+  `before`/`after` refletindo só a mudança de prioridade;
 - o formulário renderizado não contém nome nem UUID do Projeto.
 
 Antes da correção, 12 dos 16 testes de integração falhavam contra o código
@@ -205,15 +214,12 @@ mudança.
 ## 8. Confirmações
 
 - Nenhuma migration nova; nenhum schema, RLS, policy ou grant alterado.
-- `docs/dominios-checkpoint-a.md` não foi alterado; Domínios B não iniciado.
-- Nenhum commit, push ou deploy.
+- `docs/dominios-checkpoint-a.md` não foi alterado, não foi incluído no commit
+  do hotfix e permanece `untracked`; Checkpoint B de Domínios não iniciado.
+- Commit isolado (§10) — nenhum arquivo fora do escopo de Suporte.
 
 ## 9. Riscos restantes
 
-- **QA autenticado continua pendente.** O formulário e os filtros foram
-  validados por testes de componente e pela Server Action real, não num
-  navegador com sessão. Recomendo que a primeira edição real de chamado após a
-  publicação seja observada.
 - Os grants reais de produção não foram relidos nesta sessão (leitura bloqueada
   pelo ambiente). A análise de exposição se apoia no snapshot de 15/09.
 - Server Actions são endpoints públicos por natureza. A proteção está no
@@ -221,3 +227,31 @@ mudança.
   permitido.
 - `audit.log` continua registrando o `projectId` (UUID, sem nome) nas edições,
   como aprovado no Checkpoint B. Quem tem `audit:read` lê isso via RLS.
+- **QA autenticado permanece pendente após a publicação** (§10) — sem sessão
+  disponível nesta sessão, não foi possível observar uma edição real feita por
+  uma pessoa. O caminho está coberto pela `updateTicketAction` real em teste
+  automatizado (§5), e o smoke test pós-deploy não encontrou erro de aplicação
+  na janela do deploy.
+
+## 10. Publicação
+
+Commit `dcd70cb434bbdc08c9a6c52dab945a26f7cdecab` (`dcd70cb`) — isolado, só os
+13 arquivos do hotfix (`git add` explícito por caminho, sem `-A`/`.`);
+`docs/dominios-checkpoint-a.md` conferido fora do stage antes de commitar.
+
+- **Branch:** `main`. **Push:** `9075f5a..dcd70cb`, sem force, sem conflito.
+- **Deploy:** `dep-dal9mbm1egvs73f0jd70`, commit `dcd70cb` confirmado no
+  objeto do deploy, status **`live`**, build+rollout em ~80s
+  (`13:35:42Z`–`13:37:02Z`). O auto-deploy do serviço não disparou sozinho
+  pelo push (mesmo comportamento já observado nas publicações anteriores);
+  disparado manualmente via `trigger_deploy`, mesmo fluxo já usado, sem
+  alterar nenhuma configuração do serviço.
+- **Smoke test sem sessão** (`https://atlaz-os.onrender.com`): `/login` → 200;
+  `/suporte` → `/login?next=%2Fsuporte` (200); `/suporte/novo` →
+  `/login?next=%2Fsuporte%2Fnovo` (200). Zero erro de console, zero 500.
+- **Logs de aplicação** (`list_logs`, nível `error`, janela `13:35:00Z`–
+  `13:45:00Z`): zero linhas — nenhum erro disparado pelo código publicado.
+- **Smoke autenticado:** não executado — sem sessão disponível nesta sessão;
+  nenhuma credencial foi gerada. O caminho de edição está coberto pela
+  `updateTicketAction` real em `tests/integration/ticket-project-access.test.ts`
+  (§5), não por observação ao vivo.
