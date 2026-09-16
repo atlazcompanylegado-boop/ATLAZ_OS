@@ -12,9 +12,10 @@ timeline, edição/concorrência, navegação, Dashboard e QA (segurança, respo
 build) entregues e testados. Ver os relatórios de
 [Checkpoint 1](docs/clientes-checkpoint-1.md), [Checkpoint 2](docs/clientes-checkpoint-2.md),
 [Checkpoint 3](docs/clientes-checkpoint-3.md) e a
-[reconciliação do schema](docs/clientes-reconciliacao.md). Os demais módulos da
-Fase 1 (Projetos, Suporte, Domínios, Infraestrutura) ainda não foram implementados —
-ver [`docs/roadmap.md`](docs/roadmap.md). Os testes isolados de fundação rodam com
+[reconciliação do schema](docs/clientes-reconciliacao.md). Projetos também está
+**concluído e publicado** (ver abaixo). Suporte, Domínios e Infraestrutura —
+os módulos restantes da Fase 1 — ainda não foram implementados, ver
+[`docs/roadmap.md`](docs/roadmap.md). Os testes isolados de fundação rodam com
 `npm run test:foundation`, sem credenciais nem banco remoto.
 
 Projetos: fundação aplicada e validada em produção
@@ -24,9 +25,10 @@ implementadas ([Checkpoint C2](docs/projetos-checkpoint-c2.md)), QA técnico fin
 ([Checkpoint D](docs/projetos-checkpoint-d.md)) e a timeline consolidada do
 Cliente (eventos de Projetos incluídos com autorização correta,
 [Checkpoint D.1](docs/projetos-checkpoint-d1.md)) concluídos: lint, typecheck,
-testes (318+1), foundation (210) e build verdes, navegação ativa. Aprovado para
-publicação com o QA visual autenticado aceito como pendência conhecida (ver
-Checkpoint D §37–42).
+testes (318+1), foundation (210) e build verdes, navegação ativa. **Publicado
+em produção em 16/09/2026** ([Checkpoint D.2](docs/projetos-checkpoint-d2.md):
+commit `82539d2`, deploy Render, smoke test aprovado), com o QA visual
+autenticado aceito como pendência conhecida (ver Checkpoint D §37–42).
 
 ## Setup local
 

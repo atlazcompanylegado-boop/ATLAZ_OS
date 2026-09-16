@@ -52,9 +52,13 @@ Mestre do Cliente sem eventos de Projetos, frente ao Checkpoint A §21) foi
 corrigido no [Checkpoint D.1](projetos-checkpoint-d1.md): consolidação por
 `UNION ALL` na leitura, autorização correta (`client:read`+`project:read`),
 org/cliente isolados por join explícito, sem N+1, 10 testes novos (318+1 no
-total). **Aprovado para publicação** com o QA visual autenticado aceito como
-pendência conhecida (ambiente sem sessão disponível para testá-lo).
-Ordem de trabalho: Projetos → Suporte → Domínios → Infraestrutura → integração
+total). **Publicado em produção em 16/09/2026** (commit `82539d2`, deploy
+Render `dep-dakub567bikc73dn9hj0`, smoke test não destrutivo aprovado — ver
+[Checkpoint D.2](projetos-checkpoint-d2.md)), com o QA visual autenticado
+aceito como pendência conhecida (ambiente sem sessão disponível para testá-lo).
+**Projetos está concluído e publicado; a Fase 1 como um todo continua em
+aberto** — Suporte, Domínios e Infraestrutura ainda não foram implementados.
+Ordem de trabalho: Suporte → Domínios → Infraestrutura → integração
 final/timeline → Dashboard operacional → QA da Fase 1. Parada obrigatória após
 cada etapa. Clientes permanece concluído, sem regressão. **A Fase 1 como um
 todo continua em aberto** — Suporte, Domínios e Infraestrutura ainda não
