@@ -19,8 +19,10 @@ beforeAll(async () => {
     insert into audit.log(org_id,actor_label,entity_type,action)
       values ('10000000-0000-4000-8000-000000000001','Servidor','project','legacy');
   `);
+  await applyTestMigration(database.pg, "0001_auth_sync_trigger.sql");
   await applyTestMigration(database.pg, "0002_clients.sql");
   await applyTestMigration(database.pg, "0003_client_event_security.sql");
+  await applyTestMigration(database.pg, "0004_projects.sql");
 }, 30000);
 afterAll(async () => { await database?.pg.close(); });
 
@@ -58,11 +60,12 @@ describe("reconciliação e migrations sem DDL incidental", () => {
     }
   });
   it("snapshot novo representa o schema final sem exportar auth", async () => {
-    const snapshot = JSON.parse(await readFile(path.resolve("src/server/db/migrations/meta/0003_snapshot.json"), "utf8"));
+    const snapshot = JSON.parse(await readFile(path.resolve("src/server/db/migrations/meta/0004_snapshot.json"), "utf8"));
     const generated = generateDrizzleJson(schema, snapshot.prevId, ["public", "audit"]);
     expect(snapshot.tables).toEqual(generated.tables);
     expect(snapshot.tables["auth.users"]).toBeUndefined();
-    const previous = JSON.parse(await readFile(path.resolve("src/server/db/migrations/meta/0002_snapshot.json"), "utf8"));
+    const previous = JSON.parse(await readFile(path.resolve("src/server/db/migrations/meta/0003_snapshot.json"), "utf8"));
     expect(snapshot.prevId).toBe(previous.id);
+    for (const [key, table] of Object.entries(previous.tables)) expect(snapshot.tables[key]).toEqual(table);
   });
 });

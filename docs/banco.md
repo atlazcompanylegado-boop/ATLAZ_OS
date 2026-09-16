@@ -1,5 +1,15 @@
 # Banco de Dados — ATLΛZ OS
 
+> Continuidade em 15/09/2026: Projetos — migration `0004_projects.sql` (tabela
+> `projects`, constraints, índices, triggers, RLS e substituição da policy de
+> eventos para incluir `entity_type='project'`) foi aplicada e validada contra o
+> Supabase real no [Checkpoint C1](projetos-checkpoint-c1.md), com estrutura,
+> RLS, cross-org e concorrência confirmadas por 28/28 asserções. UI/integração
+> em [C2](projetos-checkpoint-c2.md); QA técnico final em
+> [Checkpoint D](projetos-checkpoint-d.md) (ver proposta original em
+> [Checkpoint A](projetos-checkpoint-a.md)). Nenhuma migration adicional foi
+> criada nos Checkpoints C2/D.
+
 ## 1. Baseline herdado do projeto anterior
 
 O projeto Supabase usado pelo ATLΛZ OS **não nasceu vazio**: já continha, quando adotado nesta sessão, um schema completo (organização, usuários, papéis, permissões granulares, memberships, timeline e auditoria), aplicado por uma migration do projeto anterior (rastreada em `public._atlaz_migrations`, fora do Drizzle). Antes de aplicar qualquer coisa nova, o schema existente foi inspecionado a fundo e avaliado como reutilizável — não é "estado corrompido": é um RBAC granular coerente, já com RLS e seed de papéis/permissões, e mais alinhado à exigência de "permissões granulares" do escopo do que uma versão simplificada com enum fixo teria sido.

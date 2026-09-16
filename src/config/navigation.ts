@@ -25,8 +25,13 @@ export interface NavItem {
   /** "available": rota real e funcional na Fase 0. "planned": placeholder honesto (ver docs/roadmap.md). */
   status: "available" | "planned";
   phase?: string;
-  /** Some itens "available" exigem uma permissão para até aparecer (ex.: Clientes → `client:read`). Ausente = sempre visível (comportamento herdado, ex.: Equipe). */
-  permission?: PermissionKey;
+  /**
+   * Some itens "available" exigem permissão para até aparecer (ex.: Clientes →
+   * `client:read`). Aceita uma chave única ou uma lista (ex.: Projetos precisa de
+   * `project:read` **e** `client:read`, o mesmo par exigido por `authorizeProjectSession`).
+   * Ausente = sempre visível (comportamento herdado, ex.: Equipe).
+   */
+  permission?: PermissionKey | PermissionKey[];
 }
 
 export interface NavGroup {
@@ -47,7 +52,7 @@ export const NAVIGATION: NavGroup[] = [
     label: "Operação",
     items: [
       { label: "Clientes", href: "/clientes", icon: Users, status: "available", permission: "client:read" },
-      { label: "Projetos", href: "/projetos", icon: FolderKanban, status: "planned", phase: "Fase 1" },
+      { label: "Projetos", href: "/projetos", icon: FolderKanban, status: "available", permission: ["project:read", "client:read"] },
       { label: "Suporte", href: "/suporte", icon: LifeBuoy, status: "planned", phase: "Fase 1" },
     ],
   },
@@ -93,7 +98,9 @@ export const NAVIGATION: NavGroup[] = [
 export const FLAT_NAVIGATION: NavItem[] = NAVIGATION.flatMap((group) => group.items);
 
 function isNavItemVisible(item: NavItem, permissions: readonly string[] | undefined): boolean {
-  return !item.permission || can(permissions, item.permission);
+  if (!item.permission) return true;
+  const required = Array.isArray(item.permission) ? item.permission : [item.permission];
+  return required.every((key) => can(permissions, key));
 }
 
 /** Filtra grupos/itens que exigem uma permissão o usuário não possui — nunca lista o que ele não pode abrir. */

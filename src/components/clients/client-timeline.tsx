@@ -3,6 +3,7 @@ import { History } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { translateClientEventKind } from "@/lib/clients/activity";
+import { translateProjectEventKind } from "@/lib/projects/activity";
 import type { ClientTimelineEntry } from "@/server/repositories/client-timeline-repository";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -37,7 +38,9 @@ export function ClientTimeline({
         {entries.map((entry) => (
           <li key={entry.id} className="relative">
             <span className="absolute -left-[26px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-surface-1 bg-accent" />
-            <p className="text-sm font-medium text-ink-1">{translateClientEventKind(entry.kind)}</p>
+            <p className="text-sm font-medium text-ink-1">
+              {entry.projectName ? `${entry.projectName} — ${translateProjectEventKind(entry.kind)}` : translateClientEventKind(entry.kind)}
+            </p>
             {entry.summary ? <p className="text-sm text-ink-2">{entry.summary}</p> : null}
             <p className="mt-0.5 text-xs text-ink-3">
               {entry.actorName ?? "Sistema"} · {dateFormatter.format(entry.occurredAt)}

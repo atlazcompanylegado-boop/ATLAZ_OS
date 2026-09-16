@@ -1,6 +1,7 @@
 import "server-only";
 import { getCurrentSession } from "@/lib/auth/session";
 import { authorizeClientSession } from "@/lib/auth/client-access";
+import { can } from "@/config/permissions";
 import { getDb } from "@/server/db/client";
 import { ServiceError } from "./service-error";
 import { recordClientAudit, recordClientEvent } from "./client-events";
@@ -35,6 +36,16 @@ interface Actor {
   userId: string;
   membershipId: string;
   actorLabel: string;
+  /**
+   * Sessão também tem `project:read` — usado só para decidir se a timeline do
+   * Cliente consolida eventos de Projetos na leitura (ver `listClientTimeline`/
+   * `getClientWorkspace`). Calculado aqui, e não em `project-access.ts`, para
+   * não fazer o service de Clientes depender do de Projetos: `client:read` já
+   * foi confirmado por `authorizeClientSession` acima, então só falta checar a
+   * permissão adicional com o `can()` genérico, sem reimplementar nem importar
+   * a política de autorização de Projetos.
+   */
+  canReadProjects: boolean;
 }
 
 async function requireAccess(access: "read" | "write"): Promise<Actor> {
@@ -43,7 +54,7 @@ async function requireAccess(access: "read" | "write"): Promise<Actor> {
   if (!auth.ok) {
     throw new ServiceError("forbidden", "Você não tem acesso a Clientes.");
   }
-  return auth.context;
+  return { ...auth.context, canReadProjects: can(session?.membership?.permissions, "project:read") };
 }
 
 /** Traduz falhas do Postgres (defesa em profundidade — a validação prévia cobre o caminho feliz). */
@@ -186,11 +197,11 @@ export async function listClientTimeline(
   clientId: string,
   page = 1,
 ): Promise<{ rows: ClientTimelineEntry[]; total: number; pageSize: number }> {
-  const { orgId } = await requireAccess("read");
+  const { orgId, canReadProjects } = await requireAccess("read");
   const db = getDb();
   const client = await clientRepo.getClientById(db, orgId, clientId);
   if (!client) throw new ServiceError("not_found", "Cliente não encontrado.");
-  return timelineRepo.listClientTimeline(db, orgId, clientId, page);
+  return timelineRepo.listClientTimeline(db, orgId, clientId, page, canReadProjects);
 }
 
 export interface ClientWorkspace {
@@ -208,13 +219,13 @@ export interface ClientWorkspace {
  * em paralelo (revisão de performance do Checkpoint 3, Etapa L — ver §37).
  */
 export async function getClientWorkspace(clientId: string, timelinePage = 1): Promise<ClientWorkspace> {
-  const { orgId } = await requireAccess("read");
+  const { orgId, canReadProjects } = await requireAccess("read");
   const db = getDb();
   const client = await clientRepo.getClientById(db, orgId, clientId);
   if (!client) throw new ServiceError("not_found", "Cliente não encontrado.");
   const [contacts, timeline] = await Promise.all([
     contactRepo.listClientContacts(db, orgId, clientId),
-    timelineRepo.listClientTimeline(db, orgId, clientId, timelinePage),
+    timelineRepo.listClientTimeline(db, orgId, clientId, timelinePage, canReadProjects),
   ]);
   return { client, contacts, timeline };
 }

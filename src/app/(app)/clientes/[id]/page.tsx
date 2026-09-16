@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { Pencil, Globe, Mail, Calendar, FileText, User } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth/session";
 import { authorizeClientSession } from "@/lib/auth/client-access";
+import { authorizeProjectSession } from "@/lib/auth/project-access";
 import { can } from "@/config/permissions";
 import { getClientWorkspace, type ClientWorkspace } from "@/server/services/client-service";
+import { listProjects } from "@/server/services/project-service";
 import { ServiceError } from "@/server/services/service-error";
 import { parsePositiveInt } from "@/lib/validation/normalize";
 import { PERSON_TYPE_LABELS } from "@/lib/validation/client";
@@ -18,12 +20,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientStatusBadge } from "@/components/clients/status-badge";
 import { ContactManager } from "@/components/clients/contact-manager";
 import { ClientTimeline } from "@/components/clients/client-timeline";
+import { ClientProjectsTab, ClientProjectsForbidden } from "@/components/projects/client-projects-tab";
 
 const TAB_VALUES = ["geral", "contatos", "projetos", "suporte", "dominios", "infraestrutura", "timeline"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 const FUTURE_MODULE_COPY: Partial<Record<TabValue, string>> = {
-  projetos: "Os projetos vinculados a este cliente aparecerão aqui quando o módulo Projetos for habilitado.",
   suporte: "Os chamados deste cliente aparecerão aqui quando o módulo Suporte for habilitado.",
   dominios: "Os domínios associados a este cliente aparecerão aqui quando o módulo Domínios for habilitado.",
   infraestrutura: "Os recursos de infraestrutura deste cliente aparecerão aqui quando o módulo Infraestrutura for habilitado.",
@@ -55,6 +57,7 @@ export default async function ClienteDetailPage({
   const tabParam = typeof sp.tab === "string" ? sp.tab : "geral";
   const activeTab: TabValue = (TAB_VALUES as readonly string[]).includes(tabParam) ? (tabParam as TabValue) : "geral";
   const timelinePage = parsePositiveInt(sp.timelinePage, 1);
+  const projectsPage = parsePositiveInt(sp.projetosPage, 1);
 
   let client: ClientWorkspace["client"], contacts: ClientWorkspace["contacts"], timeline: ClientWorkspace["timeline"];
   try {
@@ -65,6 +68,12 @@ export default async function ClienteDetailPage({
   }
   const primaryContact = contacts.find((c) => c.isPrimary) ?? null;
   const formattedDocument = formatDocumentForDisplay(client.personType, client.document);
+
+  // Permissões cruzadas: `client:read` (já garantido acima) não implica `project:read`.
+  // Sem os dois, a aba nunca consulta/mostra dados de Projetos (ver Checkpoint C §38).
+  const canReadProjects = authorizeProjectSession(session, "read").ok;
+  const canWriteProjects = canReadProjects && can(session?.membership?.permissions, "project:write");
+  const projects = canReadProjects ? await listProjects({ clientId: client.id, page: projectsPage }) : null;
 
   return (
     <div className="space-y-6">
@@ -121,7 +130,22 @@ export default async function ClienteDetailPage({
           <ContactManager clientId={client.id} contacts={contacts} canWrite={canWrite} />
         </TabsContent>
 
-        {(["projetos", "suporte", "dominios", "infraestrutura"] as const).map((tab) => (
+        <TabsContent value="projetos">
+          {projects ? (
+            <ClientProjectsTab
+              clientId={client.id}
+              rows={projects.rows}
+              total={projects.total}
+              page={projects.page}
+              pageSize={projects.pageSize}
+              canWrite={canWriteProjects}
+            />
+          ) : (
+            <ClientProjectsForbidden />
+          )}
+        </TabsContent>
+
+        {(["suporte", "dominios", "infraestrutura"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
             <EmptyState title="Ainda não disponível" description={FUTURE_MODULE_COPY[tab]} />
           </TabsContent>

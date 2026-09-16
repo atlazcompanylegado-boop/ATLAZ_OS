@@ -9,3 +9,4 @@ export * from "./activity-events";
 export * from "./audit-log";
 export * from "./clients";
 export * from "./client-contacts";
+export * from "./projects";

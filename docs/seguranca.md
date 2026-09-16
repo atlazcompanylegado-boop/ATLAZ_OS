@@ -1,5 +1,20 @@
 # Segurança — ATLΛZ OS
 
+> Projetos, 15/09/2026: a proposta de autorização do
+> [Checkpoint A](projetos-checkpoint-a.md) foi implementada e validada contra o
+> Supabase real no [Checkpoint C1](projetos-checkpoint-c1.md) — RLS de
+> `projects` e substituição controlada da policy `activity_select` (exige
+> `project:read`+`client:read`+Cliente pai visível para `entity_type='project'`,
+> preservando a regra de Clientes), UI/autorização de página em
+> [C2](projetos-checkpoint-c2.md). [Checkpoint D](projetos-checkpoint-d.md)
+> revalidou autorização, org isolation e BYPASSRLS por leitura de código
+> (sem alterar nenhuma policy). A lacuna registrada em D — timeline da Ficha
+> Mestre do Cliente sem eventos de Projetos — foi corrigida no
+> [Checkpoint D.1](projetos-checkpoint-d1.md): consolidação só na leitura
+> (nenhum producer/policy alterado), autorização via `client:read`+
+> `project:read`, org/cliente isolados por `INNER JOIN` explícito em
+> `projects` (nunca por RLS nem por `payload.clientId`).
+
 ## 1. Princípio
 
 Nenhuma permissão é confiável só porque a UI escondeu um botão. Operações pela conexão Drizzle com **BYPASSRLS** exigem autorização na aplicação e filtros explícitos de organização. RLS protege o acesso como usuário final; não bloqueia consultas executadas pela conexão privilegiada. Constraints e transações continuam protegendo integridade nesse caminho.

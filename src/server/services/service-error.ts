@@ -12,6 +12,8 @@ export type ServiceErrorCode =
   | "validation"
   | "duplicate_document"
   | "invalid_owner"
+  | "invalid_client"
+  | "invalid_transition"
   | "conflict"
   | "database_error";
 

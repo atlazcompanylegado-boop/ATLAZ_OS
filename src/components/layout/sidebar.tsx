@@ -51,6 +51,7 @@ export function Sidebar({
 
         <button
           onClick={onToggle}
+          aria-label={collapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
           className="flex h-11 items-center justify-center gap-2 border-t border-[var(--glass-border)] text-ink-3 transition-colors duration-200 hover:text-ink-1"
         >
           {collapsed ? <ChevronsRight className="h-4 w-4" strokeWidth={1.5} /> : <ChevronsLeft className="h-4 w-4" strokeWidth={1.5} />}

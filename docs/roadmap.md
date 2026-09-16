@@ -38,6 +38,28 @@ e [Checkpoint 3](clientes-checkpoint-3.md) para o histórico completo.
 
 Aprovado pelo usuário para fechamento (commit/push/deploy) após o Checkpoint 3.
 
+### Continuidade — Projetos (15/09/2026)
+
+[Checkpoint A — auditoria e proposta](projetos-checkpoint-a.md),
+[B — fundação](projetos-checkpoint-b.md),
+[C1 — migration 0004 aplicada e validada em produção](projetos-checkpoint-c1.md) e
+[C2 — UI, integração com a Ficha Mestre do Cliente e navegação](projetos-checkpoint-c2.md)
+aprovados. [Checkpoint D — QA técnico final](projetos-checkpoint-d.md) concluído:
+lint/typecheck/testes/foundation/build verdes, navegação/segurança/regressão de
+Clientes revalidadas, dois bugs de UI corrigidos (filtros de prioridade/vencidos
+ausentes; `aria-label` da sidebar). O gap identificado em D (timeline da Ficha
+Mestre do Cliente sem eventos de Projetos, frente ao Checkpoint A §21) foi
+corrigido no [Checkpoint D.1](projetos-checkpoint-d1.md): consolidação por
+`UNION ALL` na leitura, autorização correta (`client:read`+`project:read`),
+org/cliente isolados por join explícito, sem N+1, 10 testes novos (318+1 no
+total). **Aprovado para publicação** com o QA visual autenticado aceito como
+pendência conhecida (ambiente sem sessão disponível para testá-lo).
+Ordem de trabalho: Projetos → Suporte → Domínios → Infraestrutura → integração
+final/timeline → Dashboard operacional → QA da Fase 1. Parada obrigatória após
+cada etapa. Clientes permanece concluído, sem regressão. **A Fase 1 como um
+todo continua em aberto** — Suporte, Domínios e Infraestrutura ainda não
+foram implementados.
+
 ## Fase 2 — Comercial / Gestão
 CRM (lead → fechado/perdido), Propostas (com conversão proposta aprovada → cliente/projeto), Contratos, Financeiro (contas a pagar/receber, MRR, recorrência), motor de Alertas (vencimento de domínio/contrato, inadimplência, chamado parado).
 

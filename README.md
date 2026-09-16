@@ -17,6 +17,17 @@ Fase 1 (Projetos, Suporte, Domínios, Infraestrutura) ainda não foram implement
 ver [`docs/roadmap.md`](docs/roadmap.md). Os testes isolados de fundação rodam com
 `npm run test:foundation`, sem credenciais nem banco remoto.
 
+Projetos: fundação aplicada e validada em produção
+([Checkpoint A](docs/projetos-checkpoint-a.md), [B](docs/projetos-checkpoint-b.md),
+[C1](docs/projetos-checkpoint-c1.md)), UI/integração com a Ficha Mestre do Cliente
+implementadas ([Checkpoint C2](docs/projetos-checkpoint-c2.md)), QA técnico final
+([Checkpoint D](docs/projetos-checkpoint-d.md)) e a timeline consolidada do
+Cliente (eventos de Projetos incluídos com autorização correta,
+[Checkpoint D.1](docs/projetos-checkpoint-d1.md)) concluídos: lint, typecheck,
+testes (318+1), foundation (210) e build verdes, navegação ativa. Aprovado para
+publicação com o QA visual autenticado aceito como pendência conhecida (ver
+Checkpoint D §37–42).
+
 ## Setup local
 
 ```bash
