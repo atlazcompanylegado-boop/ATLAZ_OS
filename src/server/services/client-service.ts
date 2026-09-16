@@ -43,9 +43,11 @@ interface Actor {
    * não fazer o service de Clientes depender do de Projetos: `client:read` já
    * foi confirmado por `authorizeClientSession` acima, então só falta checar a
    * permissão adicional com o `can()` genérico, sem reimplementar nem importar
-   * a política de autorização de Projetos.
+   * a política de autorização de Projetos. `canReadTickets` segue o mesmo raciocínio
+   * para a consolidação de eventos de Suporte (`ticket:read`).
    */
   canReadProjects: boolean;
+  canReadTickets: boolean;
 }
 
 async function requireAccess(access: "read" | "write"): Promise<Actor> {
@@ -54,7 +56,8 @@ async function requireAccess(access: "read" | "write"): Promise<Actor> {
   if (!auth.ok) {
     throw new ServiceError("forbidden", "Você não tem acesso a Clientes.");
   }
-  return { ...auth.context, canReadProjects: can(session?.membership?.permissions, "project:read") };
+  return { ...auth.context, canReadProjects: can(session?.membership?.permissions, "project:read"),
+    canReadTickets: can(session?.membership?.permissions, "ticket:read") };
 }
 
 /** Traduz falhas do Postgres (defesa em profundidade — a validação prévia cobre o caminho feliz). */
@@ -197,11 +200,11 @@ export async function listClientTimeline(
   clientId: string,
   page = 1,
 ): Promise<{ rows: ClientTimelineEntry[]; total: number; pageSize: number }> {
-  const { orgId, canReadProjects } = await requireAccess("read");
+  const { orgId, canReadProjects, canReadTickets } = await requireAccess("read");
   const db = getDb();
   const client = await clientRepo.getClientById(db, orgId, clientId);
   if (!client) throw new ServiceError("not_found", "Cliente não encontrado.");
-  return timelineRepo.listClientTimeline(db, orgId, clientId, page, canReadProjects);
+  return timelineRepo.listClientTimeline(db, orgId, clientId, page, canReadProjects, canReadTickets);
 }
 
 export interface ClientWorkspace {
@@ -219,13 +222,13 @@ export interface ClientWorkspace {
  * em paralelo (revisão de performance do Checkpoint 3, Etapa L — ver §37).
  */
 export async function getClientWorkspace(clientId: string, timelinePage = 1): Promise<ClientWorkspace> {
-  const { orgId, canReadProjects } = await requireAccess("read");
+  const { orgId, canReadProjects, canReadTickets } = await requireAccess("read");
   const db = getDb();
   const client = await clientRepo.getClientById(db, orgId, clientId);
   if (!client) throw new ServiceError("not_found", "Cliente não encontrado.");
   const [contacts, timeline] = await Promise.all([
     contactRepo.listClientContacts(db, orgId, clientId),
-    timelineRepo.listClientTimeline(db, orgId, clientId, timelinePage, canReadProjects),
+    timelineRepo.listClientTimeline(db, orgId, clientId, timelinePage, canReadProjects, canReadTickets),
   ]);
   return { client, contacts, timeline };
 }

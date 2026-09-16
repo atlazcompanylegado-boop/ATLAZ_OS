@@ -9,6 +9,21 @@
 > [Checkpoint D](projetos-checkpoint-d.md) (ver proposta original em
 > [Checkpoint A](projetos-checkpoint-a.md)). Nenhuma migration adicional foi
 > criada nos Checkpoints C2/D.
+>
+> Continuidade em 16/09/2026: Suporte — migration `0005_support.sql` (tabelas
+> `support_tickets`/`ticket_comments`, `UNIQUE` aditiva em `projects` para a FK
+> tripla `(org_id, client_id, project_id)`, `ticket_number` via `GENERATED
+> ALWAYS AS IDENTITY`, RLS, grants e terceiro ramo `entity_type='ticket'` na
+> policy de eventos) foi aplicada e reconciliada contra o Supabase real no
+> [Checkpoint C1](suporte-checkpoint-c1.md), com estrutura, RLS, FK tripla,
+> imutabilidade de comentários e regressão de Clientes/Projetos confirmadas
+> (20/21 asserções funcionais — a 1 restante foi falso negativo do script de
+> teste, não do banco). Fundação/proposta em
+> [Checkpoint A](suporte-checkpoint-a.md)/[B](suporte-checkpoint-b.md). UI,
+> navegação e QA final concluídos nos Checkpoints
+> [C2](suporte-checkpoint-c2.md)/[D](suporte-checkpoint-d.md) — nenhuma
+> migration nova além da `0005` em nenhuma dessas etapas. Suporte está
+> tecnicamente pronto, aguardando publicação.
 
 ## 1. Baseline herdado do projeto anterior
 

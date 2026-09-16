@@ -13,7 +13,8 @@ build) entregues e testados. Ver os relatórios de
 [Checkpoint 1](docs/clientes-checkpoint-1.md), [Checkpoint 2](docs/clientes-checkpoint-2.md),
 [Checkpoint 3](docs/clientes-checkpoint-3.md) e a
 [reconciliação do schema](docs/clientes-reconciliacao.md). Projetos também está
-**concluído e publicado** (ver abaixo). Suporte, Domínios e Infraestrutura —
+**concluído e publicado** (ver abaixo). Suporte está tecnicamente pronto,
+aguardando decisão de publicação (ver abaixo). Domínios e Infraestrutura —
 os módulos restantes da Fase 1 — ainda não foram implementados, ver
 [`docs/roadmap.md`](docs/roadmap.md). Os testes isolados de fundação rodam com
 `npm run test:foundation`, sem credenciais nem banco remoto.
@@ -29,6 +30,19 @@ testes (318+1), foundation (210) e build verdes, navegação ativa. **Publicado
 em produção em 16/09/2026** ([Checkpoint D.2](docs/projetos-checkpoint-d2.md):
 commit `82539d2`, deploy Render, smoke test aprovado), com o QA visual
 autenticado aceito como pendência conhecida (ver Checkpoint D §37–42).
+
+Suporte: fundação aplicada e validada em produção
+([Checkpoint A](docs/suporte-checkpoint-a.md), [B](docs/suporte-checkpoint-b.md),
+[C1](docs/suporte-checkpoint-c1.md)), UI/integração com a Ficha Mestre do Cliente
+implementadas ([Checkpoint C2](docs/suporte-checkpoint-c2.md)), tradução dos
+eventos de Suporte na Timeline consolidada do Cliente
+([Checkpoint C2.1](docs/suporte-checkpoint-c2-1.md)) e QA técnico final
+([Checkpoint D](docs/suporte-checkpoint-d.md)) concluídos: listagem, KPIs,
+filtros/busca (incluindo por número do chamado), formulário, ficha,
+comentários, ações de status explícitas, timeline, navegação ativa. Lint,
+typecheck, testes (500+2), foundation (343) e build verdes. **Implementação
+concluída localmente, aguardando publicação** — QA visual autenticado
+permanece pendente (mesma ressalva de Clientes/Projetos).
 
 ## Setup local
 

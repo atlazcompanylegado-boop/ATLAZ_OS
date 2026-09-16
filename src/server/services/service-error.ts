@@ -13,6 +13,7 @@ export type ServiceErrorCode =
   | "duplicate_document"
   | "invalid_owner"
   | "invalid_client"
+  | "invalid_project"
   | "invalid_transition"
   | "conflict"
   | "database_error";

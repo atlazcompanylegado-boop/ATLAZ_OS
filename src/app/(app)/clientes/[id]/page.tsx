@@ -4,9 +4,11 @@ import { Pencil, Globe, Mail, Calendar, FileText, User } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth/session";
 import { authorizeClientSession } from "@/lib/auth/client-access";
 import { authorizeProjectSession } from "@/lib/auth/project-access";
+import { authorizeTicketSession } from "@/lib/auth/ticket-access";
 import { can } from "@/config/permissions";
 import { getClientWorkspace, type ClientWorkspace } from "@/server/services/client-service";
 import { listProjects } from "@/server/services/project-service";
+import { listTickets } from "@/server/services/ticket-service";
 import { ServiceError } from "@/server/services/service-error";
 import { parsePositiveInt } from "@/lib/validation/normalize";
 import { PERSON_TYPE_LABELS } from "@/lib/validation/client";
@@ -21,12 +23,12 @@ import { ClientStatusBadge } from "@/components/clients/status-badge";
 import { ContactManager } from "@/components/clients/contact-manager";
 import { ClientTimeline } from "@/components/clients/client-timeline";
 import { ClientProjectsTab, ClientProjectsForbidden } from "@/components/projects/client-projects-tab";
+import { ClientTicketsTab, ClientTicketsForbidden } from "@/components/support/client-tickets-tab";
 
 const TAB_VALUES = ["geral", "contatos", "projetos", "suporte", "dominios", "infraestrutura", "timeline"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 const FUTURE_MODULE_COPY: Partial<Record<TabValue, string>> = {
-  suporte: "Os chamados deste cliente aparecerão aqui quando o módulo Suporte for habilitado.",
   dominios: "Os domínios associados a este cliente aparecerão aqui quando o módulo Domínios for habilitado.",
   infraestrutura: "Os recursos de infraestrutura deste cliente aparecerão aqui quando o módulo Infraestrutura for habilitado.",
 };
@@ -58,6 +60,7 @@ export default async function ClienteDetailPage({
   const activeTab: TabValue = (TAB_VALUES as readonly string[]).includes(tabParam) ? (tabParam as TabValue) : "geral";
   const timelinePage = parsePositiveInt(sp.timelinePage, 1);
   const projectsPage = parsePositiveInt(sp.projetosPage, 1);
+  const ticketsPage = parsePositiveInt(sp.suportePage, 1);
 
   let client: ClientWorkspace["client"], contacts: ClientWorkspace["contacts"], timeline: ClientWorkspace["timeline"];
   try {
@@ -74,6 +77,12 @@ export default async function ClienteDetailPage({
   const canReadProjects = authorizeProjectSession(session, "read").ok;
   const canWriteProjects = canReadProjects && can(session?.membership?.permissions, "project:write");
   const projects = canReadProjects ? await listProjects({ clientId: client.id, page: projectsPage }) : null;
+
+  // Mesma disciplina da aba Projetos: `client:read` (já garantido acima) não implica
+  // `ticket:read`. Sem os dois, a aba nunca consulta/mostra dados de Suporte.
+  const canReadTickets = authorizeTicketSession(session, "read").ok;
+  const canWriteTickets = canReadTickets && can(session?.membership?.permissions, "ticket:write");
+  const tickets = canReadTickets ? await listTickets({ clientId: client.id, page: ticketsPage }) : null;
 
   return (
     <div className="space-y-6">
@@ -145,7 +154,22 @@ export default async function ClienteDetailPage({
           )}
         </TabsContent>
 
-        {(["suporte", "dominios", "infraestrutura"] as const).map((tab) => (
+        <TabsContent value="suporte">
+          {tickets ? (
+            <ClientTicketsTab
+              clientId={client.id}
+              rows={tickets.rows}
+              total={tickets.total}
+              page={tickets.page}
+              pageSize={tickets.pageSize}
+              canWrite={canWriteTickets}
+            />
+          ) : (
+            <ClientTicketsForbidden />
+          )}
+        </TabsContent>
+
+        {(["dominios", "infraestrutura"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
             <EmptyState title="Ainda não disponível" description={FUTURE_MODULE_COPY[tab]} />
           </TabsContent>

@@ -23,6 +23,7 @@ beforeAll(async () => {
   await applyTestMigration(database.pg, "0002_clients.sql");
   await applyTestMigration(database.pg, "0003_client_event_security.sql");
   await applyTestMigration(database.pg, "0004_projects.sql");
+  await applyTestMigration(database.pg, "0005_support.sql");
 }, 30000);
 afterAll(async () => { await database?.pg.close(); });
 
@@ -36,9 +37,11 @@ describe("reconciliação e migrations sem DDL incidental", () => {
     for (const table of Object.values(schema).filter((value) => is(value, PgTable))) {
       const config = getTableConfig(table);
       const schemaName = config.schema ?? "public";
+      // atthasdef não cobre GENERATED ALWAYS AS IDENTITY (mecanismo separado, attidentity <> '') —
+      // Drizzle trata os dois como "tem valor automático" (hasDefault), então a comparação precisa somar os dois.
       const columns = await database.pg.query<{ name: string; not_null: boolean; type: string; has_default: boolean }>(
         `select a.attname as name, a.attnotnull as not_null, format_type(a.atttypid,a.atttypmod) as type,
-          a.atthasdef as has_default from pg_attribute a
+          (a.atthasdef or a.attidentity <> '') as has_default from pg_attribute a
           where a.attrelid=($1 || '.' || $2)::regclass and a.attnum>0 and not a.attisdropped order by a.attnum`,
         [schemaName, config.name],
       );
@@ -60,12 +63,21 @@ describe("reconciliação e migrations sem DDL incidental", () => {
     }
   });
   it("snapshot novo representa o schema final sem exportar auth", async () => {
-    const snapshot = JSON.parse(await readFile(path.resolve("src/server/db/migrations/meta/0004_snapshot.json"), "utf8"));
+    const snapshot = JSON.parse(await readFile(path.resolve("src/server/db/migrations/meta/0005_snapshot.json"), "utf8"));
     const generated = generateDrizzleJson(schema, snapshot.prevId, ["public", "audit"]);
     expect(snapshot.tables).toEqual(generated.tables);
     expect(snapshot.tables["auth.users"]).toBeUndefined();
-    const previous = JSON.parse(await readFile(path.resolve("src/server/db/migrations/meta/0003_snapshot.json"), "utf8"));
+    const previous = JSON.parse(await readFile(path.resolve("src/server/db/migrations/meta/0004_snapshot.json"), "utf8"));
     expect(snapshot.prevId).toBe(previous.id);
-    for (const [key, table] of Object.entries(previous.tables)) expect(snapshot.tables[key]).toEqual(table);
+    // projects ganhou um UNIQUE aditivo (0005, ver Checkpoint B de Suporte) — só essa chave muda.
+    for (const [key, table] of Object.entries(previous.tables) as [string, Record<string, unknown>][]) {
+      if (key === "public.projects") {
+        const expectedUnique = { ...(table.uniqueConstraints as Record<string, unknown>),
+          projects_org_client_id_key: { name: "projects_org_client_id_key", nullsNotDistinct: false, columns: ["org_id", "client_id", "id"] } };
+        expect(snapshot.tables[key]).toEqual({ ...table, uniqueConstraints: expectedUnique });
+        continue;
+      }
+      expect(snapshot.tables[key]).toEqual(table);
+    }
   });
 });

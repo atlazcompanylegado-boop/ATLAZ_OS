@@ -24,6 +24,10 @@ export const projects = pgTable("projects", {
   version: integer("version").notNull().default(1),
 }, (t) => [
   unique("projects_org_id_id_key").on(t.orgId, t.id),
+  // Aditiva (Checkpoint B de Suporte): permite a FK tripla de support_tickets(org_id, client_id, project_id)
+  // referenciar projects(org_id, client_id, id), impedindo estruturalmente um chamado apontar para um
+  // projeto de outro cliente. Não altera semântica de Projetos — nenhuma coluna, dado ou regra existente muda.
+  unique("projects_org_client_id_key").on(t.orgId, t.clientId, t.id),
   foreignKey({ name: "projects_org_fkey", columns: [t.orgId], foreignColumns: [orgs.id] }).onDelete("restrict"),
   foreignKey({ name: "projects_client_fkey", columns: [t.orgId, t.clientId], foreignColumns: [clients.orgId, clients.id] }).onDelete("restrict"),
   foreignKey({ name: "projects_owner_fkey", columns: [t.orgId, t.ownerUserId], foreignColumns: [memberships.orgId, memberships.userId] }).onDelete("restrict"),

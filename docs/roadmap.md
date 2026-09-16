@@ -56,13 +56,32 @@ total). **Publicado em produção em 16/09/2026** (commit `82539d2`, deploy
 Render `dep-dakub567bikc73dn9hj0`, smoke test não destrutivo aprovado — ver
 [Checkpoint D.2](projetos-checkpoint-d2.md)), com o QA visual autenticado
 aceito como pendência conhecida (ambiente sem sessão disponível para testá-lo).
-**Projetos está concluído e publicado; a Fase 1 como um todo continua em
-aberto** — Suporte, Domínios e Infraestrutura ainda não foram implementados.
-Ordem de trabalho: Suporte → Domínios → Infraestrutura → integração
-final/timeline → Dashboard operacional → QA da Fase 1. Parada obrigatória após
-cada etapa. Clientes permanece concluído, sem regressão. **A Fase 1 como um
-todo continua em aberto** — Suporte, Domínios e Infraestrutura ainda não
-foram implementados.
+**Projetos está concluído e publicado.**
+
+### Continuidade — Suporte (16/09/2026)
+
+[Checkpoint A — auditoria e proposta](suporte-checkpoint-a.md),
+[B — fundação](suporte-checkpoint-b.md),
+[C1 — migration 0005 aplicada e validada em produção](suporte-checkpoint-c1.md) e
+[C2 — UI, integração com a Ficha Mestre do Cliente e navegação](suporte-checkpoint-c2.md)
+aprovados. [Checkpoint C2.1 — correção visual da Timeline consolidada do
+Cliente](suporte-checkpoint-c2-1.md) fechou a lacuna de tradução dos eventos
+de Suporte nessa timeline (reutilizando o tradutor já existente de Suporte,
+sem tocar fundação). [Checkpoint D — QA final](suporte-checkpoint-d.md)
+concluído: regressão completa de Clientes/Projetos, segurança (cross-org,
+project masking, BYPASSRLS, N+1), acessibilidade/responsividade estruturais,
+1 bug visual isolado corrigido (formatação de data/hora inconsistente na aba
+Suporte da Ficha do Cliente). Lint/typecheck/testes (500+2)/foundation
+(343)/build verdes. **Suporte está tecnicamente pronto — implementação
+concluída localmente, aguardando publicação** (QA visual autenticado
+permanece pendente por falta de sessão disponível nesta sessão, mesma
+ressalva já registrada para Clientes/Projetos).
+
+Ordem de trabalho: Suporte (aguardando decisão de publicação) → Domínios →
+Infraestrutura → integração final/timeline → Dashboard operacional → QA da
+Fase 1. Parada obrigatória após cada etapa. Clientes e Projetos permanecem
+concluídos, sem regressão. **A Fase 1 como um todo continua em aberto** —
+Domínios e Infraestrutura ainda não foram implementados.
 
 ## Fase 2 — Comercial / Gestão
 CRM (lead → fechado/perdido), Propostas (com conversão proposta aprovada → cliente/projeto), Contratos, Financeiro (contas a pagar/receber, MRR, recorrência), motor de Alertas (vencimento de domínio/contrato, inadimplência, chamado parado).

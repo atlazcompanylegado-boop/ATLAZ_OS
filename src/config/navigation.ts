@@ -53,7 +53,7 @@ export const NAVIGATION: NavGroup[] = [
     items: [
       { label: "Clientes", href: "/clientes", icon: Users, status: "available", permission: "client:read" },
       { label: "Projetos", href: "/projetos", icon: FolderKanban, status: "available", permission: ["project:read", "client:read"] },
-      { label: "Suporte", href: "/suporte", icon: LifeBuoy, status: "planned", phase: "Fase 1" },
+      { label: "Suporte", href: "/suporte", icon: LifeBuoy, status: "available", permission: ["ticket:read", "client:read"] },
     ],
   },
   {

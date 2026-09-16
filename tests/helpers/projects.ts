@@ -29,7 +29,7 @@ export async function projectMember(database: TestDatabase, options: {
 export async function seedProjects(database: TestDatabase) {
   await database.pg.exec("truncate public.orgs, public.users, public.permissions, audit.log cascade");
   await database.db.insert(orgs).values([{ id: ORG_A, slug: "a", name: "A" }, { id: ORG_B, slug: "b", name: "B" }]);
-  await database.db.insert(permissions).values(["client:read", "client:write", "project:read", "project:write", "project:delete", "project:deploy", "audit:read"].map(key => ({ key, resource: key.split(":")[0]!, action: key.split(":")[1]!, description: "Teste" })));
+  await database.db.insert(permissions).values(["client:read", "client:write", "project:read", "project:write", "project:delete", "project:deploy", "ticket:read", "ticket:write", "audit:read"].map(key => ({ key, resource: key.split(":")[0]!, action: key.split(":")[1]!, description: "Teste" })));
   const ownerA = await projectMember(database), ownerB = await projectMember(database, { orgId: ORG_B });
   const [clientA] = await database.db.insert(clients).values({ orgId: ORG_A, name: "Cliente A", status: "closed", createdBy: ownerA.id }).returning();
   const [clientB] = await database.db.insert(clients).values({ orgId: ORG_B, name: "Cliente B", createdBy: ownerB.id }).returning();

@@ -14,6 +14,20 @@
 > (nenhum producer/policy alterado), autorização via `client:read`+
 > `project:read`, org/cliente isolados por `INNER JOIN` explícito em
 > `projects` (nunca por RLS nem por `payload.clientId`).
+>
+> Suporte, 16/09/2026: a proposta de autorização do
+> [Checkpoint A](suporte-checkpoint-a.md) foi implementada e validada contra o
+> Supabase real no [Checkpoint C1](suporte-checkpoint-c1.md) — RLS de
+> `support_tickets` (exige `ticket:read`+`client:read`, **nunca**
+> `project:read` — mascaramento do Projeto vinculado ocorre só na camada de
+> serviço) e de `ticket_comments` (herda a visibilidade do chamado pai, sem
+> write direto nem para `service_role`), mais o terceiro ramo
+> `entity_type='ticket'` na policy `activity_select`, preservando exatamente
+> as regras de Cliente/Projeto já existentes. Revalidado sem alteração no
+> [Checkpoint D](suporte-checkpoint-d.md): autorização sempre antes de
+> qualquer query, `orgId` explícito em todo repository (sem BYPASSRLS
+> implícito na aplicação), cross-org e mascaramento do Projeto vinculado
+> confirmados pela suíte automatizada — nenhum schema/RLS/grant tocado.
 
 ## 1. Princípio
 

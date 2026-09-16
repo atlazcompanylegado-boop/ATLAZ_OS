@@ -26,3 +26,23 @@ describe("navegação — Projetos exige as duas permissões (Checkpoint C2)", (
     expect(labels([])).toContain("Equipe");
   });
 });
+
+describe("navegação — Suporte exige as duas permissões (Checkpoint C2)", () => {
+  it("some sem nenhuma permissão", () => {
+    expect(labels([])).not.toContain("Suporte");
+  });
+  it("some com só ticket:read", () => {
+    expect(labels(["ticket:read"])).not.toContain("Suporte");
+  });
+  it("some com só client:read", () => {
+    expect(labels(["client:read"])).not.toContain("Suporte");
+  });
+  it("aparece com as duas permissões", () => {
+    expect(labels(["ticket:read", "client:read"])).toContain("Suporte");
+  });
+  it("Clientes e Projetos continuam sem regressão", () => {
+    expect(labels(["client:read", "project:read", "ticket:read"])).toEqual(
+      expect.arrayContaining(["Clientes", "Projetos", "Suporte"]),
+    );
+  });
+});
