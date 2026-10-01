@@ -24,6 +24,7 @@ beforeAll(async () => {
   await applyTestMigration(database.pg, "0003_client_event_security.sql");
   await applyTestMigration(database.pg, "0004_projects.sql");
   await applyTestMigration(database.pg, "0005_support.sql");
+  await applyTestMigration(database.pg, "0006_domains.sql");
 }, 30000);
 afterAll(async () => { await database?.pg.close(); });
 
@@ -63,20 +64,17 @@ describe("reconciliação e migrations sem DDL incidental", () => {
     }
   });
   it("snapshot novo representa o schema final sem exportar auth", async () => {
-    const snapshot = JSON.parse(await readFile(path.resolve("src/server/db/migrations/meta/0005_snapshot.json"), "utf8"));
+    const snapshot = JSON.parse(await readFile(path.resolve("src/server/db/migrations/meta/0006_snapshot.json"), "utf8"));
     const generated = generateDrizzleJson(schema, snapshot.prevId, ["public", "audit"]);
     expect(snapshot.tables).toEqual(generated.tables);
     expect(snapshot.tables["auth.users"]).toBeUndefined();
-    const previous = JSON.parse(await readFile(path.resolve("src/server/db/migrations/meta/0004_snapshot.json"), "utf8"));
+    const previous = JSON.parse(await readFile(path.resolve("src/server/db/migrations/meta/0005_snapshot.json"), "utf8"));
     expect(snapshot.prevId).toBe(previous.id);
-    // projects ganhou um UNIQUE aditivo (0005, ver Checkpoint B de Suporte) — só essa chave muda.
+    // A 0006 (Checkpoint B de Domínios) é puramente aditiva: nenhuma tabela existente muda —
+    // reaproveita o UNIQUE(org_id, client_id, id) que a 0005 já criou em projects, sem nova
+    // constraint lá. Só a tabela nova (public.domains) não está em `previous`, então o loop
+    // abaixo confirma que absolutamente nada mais divergiu.
     for (const [key, table] of Object.entries(previous.tables) as [string, Record<string, unknown>][]) {
-      if (key === "public.projects") {
-        const expectedUnique = { ...(table.uniqueConstraints as Record<string, unknown>),
-          projects_org_client_id_key: { name: "projects_org_client_id_key", nullsNotDistinct: false, columns: ["org_id", "client_id", "id"] } };
-        expect(snapshot.tables[key]).toEqual({ ...table, uniqueConstraints: expectedUnique });
-        continue;
-      }
       expect(snapshot.tables[key]).toEqual(table);
     }
   });

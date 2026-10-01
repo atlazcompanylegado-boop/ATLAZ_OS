@@ -46,3 +46,23 @@ describe("navegação — Suporte exige as duas permissões (Checkpoint C2)", ()
     );
   });
 });
+
+describe("navegação — Domínios exige as duas permissões (Checkpoint C2)", () => {
+  it("some sem nenhuma permissão", () => {
+    expect(labels([])).not.toContain("Domínios");
+  });
+  it("some com só domain:read", () => {
+    expect(labels(["domain:read"])).not.toContain("Domínios");
+  });
+  it("some com só client:read", () => {
+    expect(labels(["client:read"])).not.toContain("Domínios");
+  });
+  it("aparece com as duas permissões", () => {
+    expect(labels(["domain:read", "client:read"])).toContain("Domínios");
+  });
+  it("Clientes, Projetos e Suporte continuam sem regressão", () => {
+    expect(labels(["client:read", "project:read", "ticket:read", "domain:read"])).toEqual(
+      expect.arrayContaining(["Clientes", "Projetos", "Suporte", "Domínios"]),
+    );
+  });
+});

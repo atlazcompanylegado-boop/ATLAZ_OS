@@ -12,3 +12,4 @@ export * from "./client-contacts";
 export * from "./projects";
 export * from "./support-tickets";
 export * from "./ticket-comments";
+export * from "./domains";

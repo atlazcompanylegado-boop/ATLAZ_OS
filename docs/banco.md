@@ -25,6 +25,23 @@
 > migration nova além da `0005` em nenhuma dessas etapas. **Publicado em
 > produção em 16/09/2026** (commit `6cfc715`, deploy Render
 > `dep-dal0ok0ae00c73f56nbg` — ver [Checkpoint D.2](suporte-checkpoint-d2.md)).
+>
+> Continuidade em 16/09/2026: Domínios — migration `0006_domains.sql` (tabela
+> `domains`, FK composta a `clients` e FK tripla `(org_id, client_id,
+> project_id)` a `projects` reaproveitando a `UNIQUE` aditiva já criada pela
+> `0005`, índice único parcial `(org_id, domain_name) WHERE status <>
+> 'inactive'`, RLS, grants e quarto ramo `entity_type='domain'` na policy de
+> eventos) foi aplicada e reconciliada contra o Supabase real no [Checkpoint
+> C1](dominios-checkpoint-c1.md) — encontrada já aplicada (hash idêntico ao
+> arquivo local) no início daquela etapa, evidência tratada como aplicação
+> genuína e completa após revisão explícita, não como drift. Estrutura, RLS,
+> unicidade parcial e regressão de Clientes/Projetos/Suporte confirmadas
+> (26/26 asserções funcionais). Fundação/proposta em [Checkpoint
+> A](dominios-checkpoint-a.md)/[B](dominios-checkpoint-b.md). UI, navegação e
+> QA final concluídos nos Checkpoints
+> [C2](dominios-checkpoint-c2.md)/[D](dominios-checkpoint-d.md) — nenhuma
+> migration nova além da `0006` em nenhuma dessas etapas. **Tecnicamente
+> pronto, aguardando publicação.**
 
 ## 1. Baseline herdado do projeto anterior
 

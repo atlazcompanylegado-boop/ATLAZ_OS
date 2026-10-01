@@ -5,10 +5,12 @@ import { getCurrentSession } from "@/lib/auth/session";
 import { authorizeClientSession } from "@/lib/auth/client-access";
 import { authorizeProjectSession } from "@/lib/auth/project-access";
 import { authorizeTicketSession } from "@/lib/auth/ticket-access";
+import { authorizeDomainSession } from "@/lib/auth/domain-access";
 import { can } from "@/config/permissions";
 import { getClientWorkspace, type ClientWorkspace } from "@/server/services/client-service";
 import { listProjects } from "@/server/services/project-service";
 import { listTickets } from "@/server/services/ticket-service";
+import { listDomains } from "@/server/services/domain-service";
 import { ServiceError } from "@/server/services/service-error";
 import { parsePositiveInt } from "@/lib/validation/normalize";
 import { PERSON_TYPE_LABELS } from "@/lib/validation/client";
@@ -24,12 +26,12 @@ import { ContactManager } from "@/components/clients/contact-manager";
 import { ClientTimeline } from "@/components/clients/client-timeline";
 import { ClientProjectsTab, ClientProjectsForbidden } from "@/components/projects/client-projects-tab";
 import { ClientTicketsTab, ClientTicketsForbidden } from "@/components/support/client-tickets-tab";
+import { ClientDomainsTab, ClientDomainsForbidden } from "@/components/domains/client-domains-tab";
 
 const TAB_VALUES = ["geral", "contatos", "projetos", "suporte", "dominios", "infraestrutura", "timeline"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 const FUTURE_MODULE_COPY: Partial<Record<TabValue, string>> = {
-  dominios: "Os domínios associados a este cliente aparecerão aqui quando o módulo Domínios for habilitado.",
   infraestrutura: "Os recursos de infraestrutura deste cliente aparecerão aqui quando o módulo Infraestrutura for habilitado.",
 };
 
@@ -61,6 +63,7 @@ export default async function ClienteDetailPage({
   const timelinePage = parsePositiveInt(sp.timelinePage, 1);
   const projectsPage = parsePositiveInt(sp.projetosPage, 1);
   const ticketsPage = parsePositiveInt(sp.suportePage, 1);
+  const domainsPage = parsePositiveInt(sp.dominiosPage, 1);
 
   let client: ClientWorkspace["client"], contacts: ClientWorkspace["contacts"], timeline: ClientWorkspace["timeline"];
   try {
@@ -83,6 +86,12 @@ export default async function ClienteDetailPage({
   const canReadTickets = authorizeTicketSession(session, "read").ok;
   const canWriteTickets = canReadTickets && can(session?.membership?.permissions, "ticket:write");
   const tickets = canReadTickets ? await listTickets({ clientId: client.id, page: ticketsPage }) : null;
+
+  // Mesma disciplina das abas Projetos/Suporte: `client:read` (já garantido acima) não implica
+  // `domain:read`. Sem os dois, a aba nunca consulta/mostra dados de Domínios.
+  const canReadDomains = authorizeDomainSession(session, "read").ok;
+  const canWriteDomains = canReadDomains && can(session?.membership?.permissions, "domain:write");
+  const domains = canReadDomains ? await listDomains({ clientId: client.id, page: domainsPage }) : null;
 
   return (
     <div className="space-y-6">
@@ -169,7 +178,22 @@ export default async function ClienteDetailPage({
           )}
         </TabsContent>
 
-        {(["dominios", "infraestrutura"] as const).map((tab) => (
+        <TabsContent value="dominios">
+          {domains ? (
+            <ClientDomainsTab
+              clientId={client.id}
+              rows={domains.rows}
+              total={domains.total}
+              page={domains.page}
+              pageSize={domains.pageSize}
+              canWrite={canWriteDomains}
+            />
+          ) : (
+            <ClientDomainsForbidden />
+          )}
+        </TabsContent>
+
+        {(["infraestrutura"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
             <EmptyState title="Ainda não disponível" description={FUTURE_MODULE_COPY[tab]} />
           </TabsContent>

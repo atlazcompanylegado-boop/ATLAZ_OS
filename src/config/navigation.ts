@@ -3,6 +3,7 @@ import {
   Users,
   FolderKanban,
   LifeBuoy,
+  Globe,
   Target,
   FileText,
   FileSignature,
@@ -54,6 +55,7 @@ export const NAVIGATION: NavGroup[] = [
       { label: "Clientes", href: "/clientes", icon: Users, status: "available", permission: "client:read" },
       { label: "Projetos", href: "/projetos", icon: FolderKanban, status: "available", permission: ["project:read", "client:read"] },
       { label: "Suporte", href: "/suporte", icon: LifeBuoy, status: "available", permission: ["ticket:read", "client:read"] },
+      { label: "Domínios", href: "/dominios", icon: Globe, status: "available", permission: ["domain:read", "client:read"] },
     ],
   },
   {

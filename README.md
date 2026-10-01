@@ -13,10 +13,12 @@ build) entregues e testados. Ver os relatórios de
 [Checkpoint 1](docs/clientes-checkpoint-1.md), [Checkpoint 2](docs/clientes-checkpoint-2.md),
 [Checkpoint 3](docs/clientes-checkpoint-3.md) e a
 [reconciliação do schema](docs/clientes-reconciliacao.md). Projetos e Suporte
-também estão **concluídos e publicados** (ver abaixo). Domínios e Infraestrutura —
-os módulos restantes da Fase 1 — ainda não foram implementados, ver
-[`docs/roadmap.md`](docs/roadmap.md). Os testes isolados de fundação rodam com
-`npm run test:foundation`, sem credenciais nem banco remoto.
+também estão **concluídos e publicados** (ver abaixo). Domínios está
+tecnicamente pronto (fundação aplicada em produção, UI e QA final concluídos),
+aguardando publicação — ver abaixo. Infraestrutura, o módulo restante da Fase
+1, ainda não foi implementado, ver [`docs/roadmap.md`](docs/roadmap.md). Os
+testes isolados de fundação rodam com `npm run test:foundation`, sem
+credenciais nem banco remoto.
 
 Projetos: fundação aplicada e validada em produção
 ([Checkpoint A](docs/projetos-checkpoint-a.md), [B](docs/projetos-checkpoint-b.md),
@@ -44,6 +46,17 @@ produção em 16/09/2026** ([Checkpoint D.2](docs/suporte-checkpoint-d2.md):
 commit `6cfc715`, deploy Render `dep-dal0ok0ae00c73f56nbg`, smoke test
 aprovado), com o QA visual autenticado aceito como pendência conhecida (mesma
 ressalva de Clientes/Projetos).
+
+Domínios: fundação aplicada e validada em produção
+([Checkpoint A](docs/dominios-checkpoint-a.md), [B](docs/dominios-checkpoint-b.md),
+[C1](docs/dominios-checkpoint-c1.md)), UI/integração com a Ficha Mestre do Cliente
+implementadas ([Checkpoint C2](docs/dominios-checkpoint-c2.md)) e QA técnico
+final ([Checkpoint D](docs/dominios-checkpoint-d.md)) concluídos: listagem,
+KPIs, filtros/busca, cadastro, ficha (com situação de vencimento derivada),
+ações de status explícitas (transferência/inativação/reativação), timeline,
+navegação ativa. Lint, typecheck, testes (734+2), foundation (512) e build
+verdes. **Tecnicamente pronto, aguardando publicação** — QA visual autenticado
+aceito como pendência conhecida (mesma ressalva de Clientes/Projetos/Suporte).
 
 ## Setup local
 

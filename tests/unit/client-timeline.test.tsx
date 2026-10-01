@@ -14,6 +14,7 @@ function entry(overrides: Partial<ClientTimelineEntry>): ClientTimelineEntry {
     occurredAt: new Date("2026-09-15T12:00:00Z"),
     projectName: null,
     ticketNumber: null,
+    domainName: null,
     ...overrides,
   };
 }
@@ -101,5 +102,65 @@ describe("<ClientTimeline /> — tradução de eventos de Suporte (Checkpoint C2
     renderTimeline([entry({ kind: "ticket.unknown_future_kind", ticketNumber: 1042, summary: "" })]);
     expect(screen.getByText("Chamado #1042 — Atividade do chamado")).toBeInTheDocument();
     expect(screen.queryByText(/unknown_future_kind/)).not.toBeInTheDocument();
+  });
+});
+
+describe("<ClientTimeline /> — tradução de eventos de Domínios (Checkpoint C2, fechada desde a origem — sem lacuna equivalente ao C2.1 de Suporte)", () => {
+  it("domain.created traduzido, com o nome do domínio", () => {
+    renderTimeline([entry({ kind: "domain.created", domainName: "empresa.com.br", summary: "Domínio empresa.com.br cadastrado · Ativo" })]);
+    expect(screen.getByText("empresa.com.br — Domínio cadastrado")).toBeInTheDocument();
+  });
+
+  it("status alterado, sem chave técnica", () => {
+    renderTimeline([entry({ kind: "domain.status_changed", domainName: "empresa.com.br", summary: "Ativo → Em transferência" })]);
+    expect(screen.getByText("empresa.com.br — Status alterado")).toBeInTheDocument();
+    expect(screen.getByText("Ativo → Em transferência")).toBeInTheDocument();
+    expect(screen.queryByText(/transferring/)).not.toBeInTheDocument();
+  });
+
+  it("projeto vinculado — texto genérico, nunca nome/ID de Projeto (projectName sempre null para eventos de domínio)", () => {
+    renderTimeline([entry({ kind: "domain.project_changed", domainName: "empresa.com.br", summary: "Projeto vinculado" })]);
+    expect(screen.getByText("empresa.com.br — Projeto vinculado alterado")).toBeInTheDocument();
+    expect(screen.getByText("Projeto vinculado")).toBeInTheDocument();
+    expect(screen.queryByText(/Projeto Secreto/)).not.toBeInTheDocument();
+    expect(screen.queryByText(UUID_RE)).not.toBeInTheDocument();
+  });
+
+  it("observações alteradas nunca mostram o conteúdo de notes", () => {
+    renderTimeline([entry({ kind: "domain.updated", domainName: "empresa.com.br", summary: "Campos alterados: observações" })]);
+    expect(screen.getByText("empresa.com.br — Domínio atualizado")).toBeInTheDocument();
+    expect(screen.queryByText(/senha|confidencial|conteúdo sensível/i)).not.toBeInTheDocument();
+  });
+
+  it("nenhum UUID exposto no texto renderizado", () => {
+    const { container } = renderTimeline([
+      entry({ kind: "domain.created", domainName: "empresa.com.br", summary: "Domínio empresa.com.br cadastrado · Ativo" }),
+      entry({ kind: "domain.expiration_changed", domainName: "empresa.com.br", summary: "Vencimento alterado para 2027-01-01" }),
+    ]);
+    expect(container.textContent).not.toMatch(UUID_RE);
+  });
+
+  it("client, project, ticket e domain intercalados — cada um traduzido pelo tradutor correto (quarta fonte)", () => {
+    renderTimeline([
+      entry({ kind: "client.created", summary: "" }),
+      entry({ kind: "project.status_changed", projectName: "Projeto X", summary: "Ativo → Concluído" }),
+      entry({ kind: "ticket.created", ticketNumber: 1042, summary: "Chamado #1042 criado · Aberto" }),
+      entry({ kind: "domain.created", domainName: "empresa.com.br", summary: "Domínio empresa.com.br cadastrado · Ativo" }),
+    ]);
+    expect(screen.getByText("Cliente cadastrado")).toBeInTheDocument();
+    expect(screen.getByText("Projeto X — Status alterado")).toBeInTheDocument();
+    expect(screen.getByText("Chamado #1042 — Chamado criado")).toBeInTheDocument();
+    expect(screen.getByText("empresa.com.br — Domínio cadastrado")).toBeInTheDocument();
+  });
+
+  it("kind de domínio desconhecido nunca vaza `kind` cru — cai no fallback humano", () => {
+    renderTimeline([entry({ kind: "domain.unknown_future_kind", domainName: "empresa.com.br", summary: "" })]);
+    expect(screen.getByText("empresa.com.br — Atividade do domínio")).toBeInTheDocument();
+    expect(screen.queryByText(/unknown_future_kind/)).not.toBeInTheDocument();
+  });
+
+  it("regressão: Timeline de Suporte continua traduzindo normalmente (sem regressão da correção C2.1)", () => {
+    renderTimeline([entry({ kind: "ticket.status_changed", ticketNumber: 7, summary: "Aberto → Em atendimento" })]);
+    expect(screen.getByText("Chamado #7 — Status alterado")).toBeInTheDocument();
   });
 });

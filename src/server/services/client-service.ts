@@ -43,11 +43,14 @@ interface Actor {
    * não fazer o service de Clientes depender do de Projetos: `client:read` já
    * foi confirmado por `authorizeClientSession` acima, então só falta checar a
    * permissão adicional com o `can()` genérico, sem reimplementar nem importar
-   * a política de autorização de Projetos. `canReadTickets` segue o mesmo raciocínio
-   * para a consolidação de eventos de Suporte (`ticket:read`).
+   * a política de autorização de Projetos. `canReadTickets`/`canReadDomains` seguem o
+   * mesmo raciocínio para a consolidação de eventos de Suporte (`ticket:read`) e de
+   * Domínios (`domain:read` — fundação apenas; a aba/timeline visual de Domínios na
+   * Ficha do Cliente ainda não existe, ver docs/dominios-checkpoint-a.md §36).
    */
   canReadProjects: boolean;
   canReadTickets: boolean;
+  canReadDomains: boolean;
 }
 
 async function requireAccess(access: "read" | "write"): Promise<Actor> {
@@ -57,7 +60,8 @@ async function requireAccess(access: "read" | "write"): Promise<Actor> {
     throw new ServiceError("forbidden", "Você não tem acesso a Clientes.");
   }
   return { ...auth.context, canReadProjects: can(session?.membership?.permissions, "project:read"),
-    canReadTickets: can(session?.membership?.permissions, "ticket:read") };
+    canReadTickets: can(session?.membership?.permissions, "ticket:read"),
+    canReadDomains: can(session?.membership?.permissions, "domain:read") };
 }
 
 /** Traduz falhas do Postgres (defesa em profundidade — a validação prévia cobre o caminho feliz). */
@@ -200,11 +204,11 @@ export async function listClientTimeline(
   clientId: string,
   page = 1,
 ): Promise<{ rows: ClientTimelineEntry[]; total: number; pageSize: number }> {
-  const { orgId, canReadProjects, canReadTickets } = await requireAccess("read");
+  const { orgId, canReadProjects, canReadTickets, canReadDomains } = await requireAccess("read");
   const db = getDb();
   const client = await clientRepo.getClientById(db, orgId, clientId);
   if (!client) throw new ServiceError("not_found", "Cliente não encontrado.");
-  return timelineRepo.listClientTimeline(db, orgId, clientId, page, canReadProjects, canReadTickets);
+  return timelineRepo.listClientTimeline(db, orgId, clientId, page, canReadProjects, canReadTickets, canReadDomains);
 }
 
 export interface ClientWorkspace {
@@ -222,13 +226,13 @@ export interface ClientWorkspace {
  * em paralelo (revisão de performance do Checkpoint 3, Etapa L — ver §37).
  */
 export async function getClientWorkspace(clientId: string, timelinePage = 1): Promise<ClientWorkspace> {
-  const { orgId, canReadProjects, canReadTickets } = await requireAccess("read");
+  const { orgId, canReadProjects, canReadTickets, canReadDomains } = await requireAccess("read");
   const db = getDb();
   const client = await clientRepo.getClientById(db, orgId, clientId);
   if (!client) throw new ServiceError("not_found", "Cliente não encontrado.");
   const [contacts, timeline] = await Promise.all([
     contactRepo.listClientContacts(db, orgId, clientId),
-    timelineRepo.listClientTimeline(db, orgId, clientId, timelinePage, canReadProjects, canReadTickets),
+    timelineRepo.listClientTimeline(db, orgId, clientId, timelinePage, canReadProjects, canReadTickets, canReadDomains),
   ]);
   return { client, contacts, timeline };
 }

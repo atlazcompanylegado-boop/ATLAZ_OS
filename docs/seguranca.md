@@ -28,6 +28,21 @@
 > qualquer query, `orgId` explícito em todo repository (sem BYPASSRLS
 > implícito na aplicação), cross-org e mascaramento do Projeto vinculado
 > confirmados pela suíte automatizada — nenhum schema/RLS/grant tocado.
+>
+> Domínios, 16/09/2026: a proposta de autorização do
+> [Checkpoint A](dominios-checkpoint-a.md) foi implementada e validada contra
+> o Supabase real no [Checkpoint C1](dominios-checkpoint-c1.md) — RLS de
+> `domains` (exige `domain:read`+`client:read`, **nunca** `project:read` —
+> mascaramento do Projeto vinculado ocorre só na camada de serviço, mesmo
+> desenho de `support_tickets`), `anon` sem nenhum grant de tabela (mais
+> restritivo que RLS filtrando), `service_role` sem `DELETE` (inativação
+> substitui exclusão), mais o quarto ramo `entity_type='domain'` na policy
+> `activity_select`, preservando exatamente as regras de Cliente/Projeto/
+> Suporte já existentes. Revalidado sem alteração no
+> [Checkpoint D](dominios-checkpoint-d.md): autorização sempre antes de
+> qualquer query, `orgId` explícito em todo repository (sem BYPASSRLS
+> implícito na aplicação), cross-org e mascaramento do Projeto vinculado
+> confirmados pela suíte automatizada — nenhum schema/RLS/grant tocado.
 
 ## 1. Princípio
 

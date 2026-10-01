@@ -43,6 +43,13 @@
       "when": 1789522283997,
       "tag": "0005_support",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789566722080,
+      "tag": "0006_domains",
+      "breakpoints": true
     }
   ]
 }

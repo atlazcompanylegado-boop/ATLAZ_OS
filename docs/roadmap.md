@@ -31,8 +31,9 @@ Clientes (Ficha Mestre completa: visão geral, projetos, infraestrutura, domíni
 Sessão/autorização, migrations, repository/service, validação, listagem, cadastro,
 Ficha Mestre, contatos, timeline, edição/concorrência, navegação, integração com o
 Dashboard e QA (segurança, responsividade, build) entregues e testados (152 testes).
-Projetos, Suporte, Domínios e Infraestrutura continuam como abas placeholder
-honestas na Ficha Mestre — **a Fase 1 como um todo não está concluída.**
+Projetos, Suporte e Domínios deixaram de ser abas placeholder (ver
+continuidade abaixo); Infraestrutura continua como aba placeholder honesta na
+Ficha Mestre — **a Fase 1 como um todo não está concluída.**
 Ver [Checkpoint 1](clientes-checkpoint-1.md), [Checkpoint 2](clientes-checkpoint-2.md)
 e [Checkpoint 3](clientes-checkpoint-3.md) para o histórico completo.
 
@@ -80,11 +81,31 @@ aceito como pendência conhecida (ambiente sem sessão disponível para
 testá-lo, mesma ressalva de Clientes/Projetos). **Suporte está concluído e
 publicado.**
 
-Ordem de trabalho: Domínios → Infraestrutura → integração final/timeline →
-Dashboard operacional → QA da Fase 1. Parada obrigatória após cada etapa.
-Clientes, Projetos e Suporte permanecem concluídos e publicados, sem
-regressão. **A Fase 1 como um todo continua em aberto** — Domínios e
-Infraestrutura ainda não foram implementados.
+### Continuidade — Domínios (16/09/2026)
+
+[Checkpoint A — auditoria e proposta](dominios-checkpoint-a.md),
+[B — fundação](dominios-checkpoint-b.md),
+[C1 — migration 0006 aplicada e validada em produção](dominios-checkpoint-c1.md) e
+[C2 — UI, integração com a Ficha Mestre do Cliente e navegação](dominios-checkpoint-c2.md)
+aprovados. Diferente de Suporte, a tradução dos eventos de Domínios na
+Timeline consolidada do Cliente já nasceu correta no Checkpoint C2 — não
+precisou de um checkpoint C2.1 de correção separado. [Checkpoint D — QA
+final](dominios-checkpoint-d.md) concluído: regressão completa de
+Clientes/Projetos/Suporte, segurança (cross-org, project masking, BYPASSRLS,
+N+1), acessibilidade/responsividade estruturais, 1 bug visual isolado
+corrigido (formatação de data/hora inconsistente na coluna "Atualizado em" da
+listagem e da aba Domínios da Ficha do Cliente, mesma categoria do bug já
+corrigido em Suporte D). Lint/typecheck/testes (734+2)/foundation (512)/build
+verdes. **Tecnicamente pronto, aguardando publicação** — QA visual autenticado
+aceito como pendência conhecida (ambiente sem sessão disponível para
+testá-lo, mesma ressalva de Clientes/Projetos/Suporte).
+
+Ordem de trabalho: Infraestrutura → integração final/timeline → Dashboard
+operacional → QA da Fase 1. Parada obrigatória após cada etapa. Clientes,
+Projetos e Suporte permanecem concluídos e publicados, sem regressão;
+Domínios está tecnicamente pronto, aguardando aprovação de publicação. **A
+Fase 1 como um todo continua em aberto** — Infraestrutura ainda não foi
+implementada.
 
 ## Fase 2 — Comercial / Gestão
 CRM (lead → fechado/perdido), Propostas (com conversão proposta aprovada → cliente/projeto), Contratos, Financeiro (contas a pagar/receber, MRR, recorrência), motor de Alertas (vencimento de domínio/contrato, inadimplência, chamado parado).

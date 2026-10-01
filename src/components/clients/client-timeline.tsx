@@ -6,12 +6,14 @@ import { translateClientEventKind } from "@/lib/clients/activity";
 import { translateProjectEventKind } from "@/lib/projects/activity";
 import { translateTicketEventKind } from "@/lib/support/activity";
 import { formatTicketNumber } from "@/lib/support/format";
+import { translateDomainEventKind } from "@/lib/domains/activity";
 import type { ClientTimelineEntry } from "@/server/repositories/client-timeline-repository";
 
-/** Título traduzido do evento — mesmo helper usado na Timeline do próprio Projeto/Chamado, nunca uma segunda tradução. */
+/** Título traduzido do evento — mesmo helper usado na Timeline do próprio Projeto/Chamado/Domínio, nunca uma segunda tradução. */
 function timelineTitle(entry: ClientTimelineEntry): string {
   if (entry.projectName) return `${entry.projectName} — ${translateProjectEventKind(entry.kind)}`;
   if (entry.ticketNumber !== null) return `Chamado ${formatTicketNumber(entry.ticketNumber)} — ${translateTicketEventKind(entry.kind)}`;
+  if (entry.domainName) return `${entry.domainName} — ${translateDomainEventKind(entry.kind)}`;
   return translateClientEventKind(entry.kind);
 }
 

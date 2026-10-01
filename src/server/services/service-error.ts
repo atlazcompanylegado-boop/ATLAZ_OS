@@ -14,6 +14,7 @@ export type ServiceErrorCode =
   | "invalid_owner"
   | "invalid_client"
   | "invalid_project"
+  | "duplicate_domain"
   | "invalid_transition"
   | "conflict"
   | "database_error";
